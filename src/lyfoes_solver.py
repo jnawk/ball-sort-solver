@@ -1,7 +1,6 @@
 import collections
 import dataclasses
 import json
-import multiprocessing
 import typing
 
 Color = typing.Literal[
@@ -99,6 +98,10 @@ class State:
         """Convert state to list of strings."""
         return ["".join(tube) for tube in self.tubes]
 
+    def canonical_key(self) -> typing.Tuple[typing.Tuple[str, ...], ...]:
+        """Get canonical representation for equivalent state detection."""
+        return tuple(sorted(tuple(tube) for tube in self.tubes))
+
 
 def from_top_down(tubes: typing.Sequence[typing.Sequence[Color]]) -> State:
     """Create state from top-down tube representation."""
@@ -110,114 +113,66 @@ def to_one_based(moves: typing.Sequence[Move]) -> typing.Sequence[Move]:
     return [Move(move.from_tube_number + 1, move.to_tube_number + 1) for move in moves]
 
 
-def _worker_solve(args: typing.Tuple[State, typing.List[Move], int]) -> typing.Optional[typing.Tuple[State, typing.List[Move]]]:
-    """Worker function for parallel solving."""
-    initial_state, initial_path, max_depth = args
-    
-    if initial_state.solved:
-        return initial_state, initial_path
-    
-    queue = collections.deque([(initial_state, initial_path, 0)])
-    visited = {tuple(tuple(tube) for tube in initial_state.tubes)}
-    
-    while queue:
-        state, path, depth = queue.popleft()
-        
-        if depth >= max_depth:
-            continue
-            
-        for move in state.moves:
-            new_state = state.apply_move(move)
-            state_key = tuple(tuple(tube) for tube in new_state.tubes)
-            
-            if state_key in visited:
-                continue
-            visited.add(state_key)
-            
-            new_path = path + [move]
-            
-            if new_state.solved:
-                return new_state, new_path
-                
-            queue.append((new_state, new_path, depth + 1))
-    
-    return None
-
-
-def solve(initial_state: State) -> typing.Tuple[State, typing.Optional[typing.Sequence[Move]]]:
-    """Find sequence of moves to solve the puzzle using parallel BFS."""
+def solve(
+    initial_state: State,
+) -> typing.Tuple[State, typing.Optional[typing.Sequence[Move]]]:
+    """Find sequence of moves to solve the puzzle using optimized BFS with canonical states."""
     if initial_state.solved:
         return initial_state, []
-    
-    # Start with depth-limited parallel search
-    max_depth = 8
-    cpu_count = min(24, multiprocessing.cpu_count())
-    
-    while max_depth <= 50:  # Reasonable upper bound
-        # Generate initial work items by exploring first few levels
-        work_items = []
-        queue = collections.deque([(initial_state, [], 0)])
-        visited = {tuple(tuple(tube) for tube in initial_state.tubes)}
-        
-        # Build work items from first 2-3 levels
-        target_items = cpu_count * 4
-        while queue and len(work_items) < target_items:
-            state, path, depth = queue.popleft()
-            
-            if depth >= 3:  # Start parallel work from depth 3
-                work_items.append((state, path, max_depth - depth))
+
+    queue = collections.deque([(initial_state, [])])
+    visited = {initial_state.canonical_key()}
+    processed = 0
+
+    while queue:
+        state, path = queue.popleft()
+        processed += 1
+
+        if processed % 10000 == 0:
+            print(
+                f"Processed {processed} states, queue size: {len(queue)}, visited: {len(visited)}"
+            )
+
+        for move in state.moves:
+            new_state = state.apply_move(move)
+            canonical_key = new_state.canonical_key()
+
+            if canonical_key in visited:
                 continue
-                
-            for move in state.moves:
-                new_state = state.apply_move(move)
-                state_key = tuple(tuple(tube) for tube in new_state.tubes)
-                
-                if state_key in visited:
-                    continue
-                visited.add(state_key)
-                
-                new_path = path + [move]
-                
-                if new_state.solved:
-                    return new_state, new_path
-                    
-                queue.append((new_state, new_path, depth + 1))
-        
-        if not work_items:
-            break
-            
-        # Process work items in parallel
-        with multiprocessing.Pool(cpu_count) as pool:
-            results = pool.map(_worker_solve, work_items)
-            
-        # Check for solution
-        for result in results:
-            if result is not None:
-                return result
-                
-        max_depth += 5  # Increase search depth
-        print(f"Searching deeper: max_depth = {max_depth}")
-    
+            visited.add(canonical_key)
+
+            new_path = path + [move]
+
+            if new_state.solved:
+                return new_state, new_path
+
+            queue.append((new_state, new_path))
+
     return initial_state, None
 
 
 def main():
     """CLI entry point."""
-    print(f"Using {min(24, multiprocessing.cpu_count())} CPUs for parallel solving...")
-    
+    print("Starting optimized single-threaded BFS solver...")
+
     final_state, moves = solve(
         from_top_down(
             [
-                ["LB", "Ma", "Pu", "Pu"],
-                ["Wh", "Or", "Pu", "LB"],
-                ["Or", "Re", "LB", "DB"],
-                ["BG", "DB", "Ye", "Re"],
-                ["Ma", "Ye", "DB", "BG"],
-                ["Re", "Wh", "Or", "BG"],
-                ["Ye", "Or", "Ma", "BG"],
-                ["Pu", "DB", "LB", "Wh"],
-                ["Ma", "Wh", "Ye", "Re"],
-                [],[]
+                ["Or", "BG", "Re", "Cy"],
+                ["DB", "BG", "LG", "Or"],
+                ["Ye", "Ma", "Ye", "Ma"],
+                ["Wh", "BG", "LG", "Cy"],
+                ["Wh", "Cy", "Or", "Pi"],
+                ["DB", "LB", "Gr", "Pu"],
+                ["Or", "Gr", "LG", "Wh"],
+                ["Re", "Pu", "LB", "BG"],
+                ["Ye", "Ma", "Pu", "LB"],
+                ["Ye", "LB", "DB", "Pu"],
+                ["Cy", "Re", "Gr", "Pi"],
+                ["LG", "Ma", "DB", "Pi"],
+                ["Wh", "Gr", "Re", "Pi"],
+                [],
+                [],
             ]
         )
     )

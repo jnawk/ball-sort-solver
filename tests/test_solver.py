@@ -28,7 +28,7 @@ def test_equivalent():
         ]
     )
 
-    assert state1.equivalent_to( state2)
+    assert state1.equivalent_to(state2)
 
 
 def test_solver():
@@ -61,5 +61,3 @@ def test_solver():
     solved_state, moves = lyfoes_solver.solve(initial_state)
 
     assert solved_state.equivalent_to(solved)
-
-
