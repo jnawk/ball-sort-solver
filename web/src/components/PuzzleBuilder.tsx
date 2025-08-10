@@ -37,6 +37,9 @@ export function PuzzleBuilder() {
 
   const handleTubeClick = (tubeIndex: number) => {
     if (!selectedColor) return;
+    
+    // Don't allow adding more than 4 of any color
+    if ((colorCounts[selectedColor] || 0) >= 4) return;
 
     setTubes(prev => {
       const newTubes = [...prev];
@@ -172,6 +175,7 @@ export function PuzzleBuilder() {
       <ColorPalette
         selectedColor={selectedColor}
         onColorSelect={setSelectedColor}
+        colorCounts={colorCounts}
       />
 
       <div className="tubes-container" data-tube-count={tubes.length}>
