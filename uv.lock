@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -72,6 +72,24 @@ wheels = [
 ]
 
 [[package]]
+name = "ballsort-solver"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "aws-cdk-lib" },
+    { name = "constructs" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aws-cdk-lib", specifier = ">=2.210.0" },
+    { name = "constructs", specifier = ">=10.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = []
+
+[[package]]
 name = "cattrs"
 version = "25.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -124,24 +142,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/37/9b/ff11800e2edc2860c
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4f/59/bbbdcc7e0adc32e2362dbb2398949ac013f79dc3468cdf2b5ac411b0f5e8/jsii-1.113.0-py3-none-any.whl", hash = "sha256:62377c651554234ea945693f7c03cb96a969ba425a686950c88d43b0d4d76b07", size = 599669, upload-time = "2025-07-31T12:55:40.874Z" },
 ]
-
-[[package]]
-name = "lyfoes-solver"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "aws-cdk-lib" },
-    { name = "constructs" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "aws-cdk-lib", specifier = ">=2.210.0" },
-    { name = "constructs", specifier = ">=10.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = []
 
 [[package]]
 name = "publication"

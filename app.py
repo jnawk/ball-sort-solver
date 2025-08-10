@@ -145,15 +145,14 @@ class BallSortSolverPipeline(cdk.Stack):
             commands=[
                 "curl -LsSf https://astral.sh/uv/install.sh | sh",
                 "export PATH=$HOME/.local/bin:$PATH",
+                "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash",
+                "export NVM_DIR=$HOME/.nvm && . $NVM_DIR/nvm.sh && nvm install 24 && nvm use 24",
                 "npm install -g aws-cdk",
                 "cdk synth",
                 "cd web && npm install && npm run build",
                 f"aws s3 sync dist/ s3://{bucket_name}/$CODEBUILD_RESOLVED_SOURCE_VERSION/",
             ],
-            env={
-                "PYTHON_VERSION": "3.12",
-                "NODE_VERSION": "20"
-            },
+            env={"PYTHON_VERSION": "3.12"},
         )
 
         pipeline = pipelines.CodePipeline(
@@ -185,8 +184,8 @@ class BallSortSolverPipeline(cdk.Stack):
         # Grant S3 permissions to synth step
         pipeline.synth_project.add_to_role_policy(
             iam.PolicyStatement(
-                actions=["s3:PutObject", "s3:PutObjectAcl"],
-                resources=[f"{bucket.bucket_arn}/*"],
+                actions=["s3:PutObject", "s3:PutObjectAcl", "s3:ListObjectsV2"],
+                resources=[f"{bucket.bucket_arn}/*", bucket.bucket_arn],
             )
         )
 
