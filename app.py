@@ -10,10 +10,35 @@ from aws_cdk import (
     aws_iam as iam,
     aws_ssm as ssm,
     aws_codebuild as codebuild,
+    custom_resources,
     pipelines,
 )
 import constructs
 import os
+
+
+class CertificateStack(cdk.Stack):
+    def __init__(self, scope: constructs.Construct, construct_id: str, **kwargs):
+        super().__init__(scope, construct_id,  **kwargs)
+
+        zone = route53.HostedZone.from_lookup(
+            self, "HostedZone", domain_name="ballsortsolver.click"
+        )
+
+        certificate = acm.Certificate(
+            self,
+            "Certificate",
+            domain_name="ballsortsolver.click",
+            subject_alternative_names=["www.ballsortsolver.click"],
+            validation=acm.CertificateValidation.from_dns(zone)
+        )
+
+        ssm.StringParameter(
+            self,
+            "CertificateArnParameter",
+            parameter_name="/ballsortsolver/certificate-arn",
+            string_value=certificate.certificate_arn
+        )
 
 
 class BallSortDeployment(cdk.Stack):
@@ -25,7 +50,7 @@ class BallSortDeployment(cdk.Stack):
         bucket_name: str,
         **kwargs,
     ) -> None:
-        super().__init__(scope, construct_id, **kwargs)
+        super().__init__(scope, construct_id,  **kwargs)
 
         bucket = s3.Bucket.from_bucket_name(self, "WebappBucket", bucket_name)
         commit_id = os.environ.get("CODEBUILD_RESOLVED_SOURCE_VERSION", "main")
@@ -35,13 +60,27 @@ class BallSortDeployment(cdk.Stack):
             self, "Zone", domain_name="ballsortsolver.click"
         )
 
-        # ACM certificate for custom domain
-        certificate = acm.Certificate(
+        # Lookup certificate ARN from us-east-1
+        certificate_arn_lookup = custom_resources.AwsCustomResource(
             self,
-            "Certificate",
-            domain_name="ballsortsolver.click",
-            subject_alternative_names=["www.ballsortsolver.click"],
-            validation=acm.CertificateValidation.from_dns(zone),
+            "CertificateArnLookup",
+            on_update=custom_resources.AwsSdkCall(
+                action="getParameter",
+                service="SSM",
+                region="us-east-1",
+                parameters={"Name": "/ballsortsolver/certificate-arn"},
+                physical_resource_id=custom_resources.PhysicalResourceId.of("/ballsortsolver/certificate-arn")
+            ),
+            install_latest_aws_sdk=False,
+            policy=custom_resources.AwsCustomResourcePolicy.from_sdk_calls(
+                resources=[
+                    f"arn:{cdk.Aws.PARTITION}:ssm:us-east-1:{cdk.Aws.ACCOUNT_ID}:parameter/ballsortsolver/certificate-arn"
+                ]
+            )
+        )
+
+        certificate = acm.Certificate.from_certificate_arn(
+            self, "Certificate", certificate_arn_lookup.get_response_field("Parameter.Value")
         )
 
         # Cache policy for assets (cache indefinitely)
@@ -111,7 +150,7 @@ class BallSortSolverPipeline(cdk.Stack):
         env: cdk.Environment,
         **kwargs,
     ) -> None:
-        super().__init__(scope, construct_id, env=env, **kwargs)
+        super().__init__(scope, construct_id,  env=env, **kwargs)
 
         bucket_name = "ballsortsolver.click"
 
@@ -170,12 +209,22 @@ class BallSortSolverPipeline(cdk.Stack):
         )
 
         deploy_stage = cdk.Stage(self, "Deploy")
-        BallSortDeployment(
+        main_stack = BallSortDeployment(
             deploy_stage,
             "BallSortDeployment",
             bucket_name=bucket_name,
             env=env,
         )
+
+        # Certificate stack in us-east-1
+        cert_stack = CertificateStack(
+            deploy_stage,
+            "BallSortSolverCertificate",
+            env=cdk.Environment(account=self.account, region="us-east-1")
+        )
+
+        main_stack.add_dependency(cert_stack)
+
         pipeline.add_stage(deploy_stage)
 
         # no more pipeline modifications after here
@@ -185,9 +234,13 @@ class BallSortSolverPipeline(cdk.Stack):
 
 
 app = cdk.App()
+
+
+# Main pipeline in ap-southeast-2
 BallSortSolverPipeline(
     app,
     "BallSortSolverPipeline",
     env=cdk.Environment(account="232271975773", region="ap-southeast-2"),
 )
+
 app.synth()
