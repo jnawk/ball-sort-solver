@@ -150,14 +150,43 @@ export function PuzzleBuilder() {
       />
 
       <div className="tubes-container" data-tube-count={tubes.length}>
-        {(animationTubes.length > 0 ? animationTubes : tubes).map((tube, index) => (
-          <Tube
-            key={index}
-            balls={tube}
-            onCellClick={() => handleTubeClick(index)}
-            tubeIndex={index}
-          />
-        ))}
+        {tubes.length <= 5 ? (
+          // Single row for 1-5 tubes
+          <div className="tube-row">
+            {(animationTubes.length > 0 ? animationTubes : tubes).map((tube, index) => (
+              <Tube
+                key={index}
+                balls={tube}
+                onCellClick={() => handleTubeClick(index)}
+                tubeIndex={index}
+              />
+            ))}
+          </div>
+        ) : (
+          // Multiple rows for 6+ tubes
+          <>
+            <div className="tube-row">
+              {(animationTubes.length > 0 ? animationTubes : tubes).slice(0, Math.ceil(tubes.length / 2)).map((tube, index) => (
+                <Tube
+                  key={index}
+                  balls={tube}
+                  onCellClick={() => handleTubeClick(index)}
+                  tubeIndex={index}
+                />
+              ))}
+            </div>
+            <div className="tube-row">
+              {(animationTubes.length > 0 ? animationTubes : tubes).slice(Math.ceil(tubes.length / 2)).map((tube, index) => (
+                <Tube
+                  key={index + Math.ceil(tubes.length / 2)}
+                  balls={tube}
+                  onCellClick={() => handleTubeClick(index + Math.ceil(tubes.length / 2))}
+                  tubeIndex={index + Math.ceil(tubes.length / 2)}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="status">
