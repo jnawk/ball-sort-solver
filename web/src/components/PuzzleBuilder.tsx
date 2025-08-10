@@ -237,7 +237,7 @@ export function PuzzleBuilder() {
             </span>
           ))
         ) : (
-          <span>&nbsp;</span>
+          <span className="color-count placeholder">&nbsp;</span>
         )}
 
         <div className="validation">
@@ -246,20 +246,6 @@ export function PuzzleBuilder() {
           ) : (
             <span className="invalid">❌ Need exactly 4 of each color & tubes must be full or empty</span>
           )}
-        </div>
-
-        <div className="puzzle-json">
-          <h4>Puzzle State (JSON):</h4>
-          <textarea
-            value={puzzleJson}
-            onChange={(e) => setPuzzleJson(e.target.value)}
-            rows={4}
-            cols={50}
-            className="json-textarea"
-          />
-          <button onClick={loadFromJson} className="load-button">
-            Load from JSON
-          </button>
         </div>
 
         <div className="buttons">
@@ -349,6 +335,20 @@ export function PuzzleBuilder() {
             </div>
           </div>
         )}
+
+        <div className="puzzle-json">
+          <h4>Puzzle State (JSON):</h4>
+          <textarea
+            value={puzzleJson}
+            onChange={(e) => setPuzzleJson(e.target.value)}
+            rows={4}
+            cols={50}
+            className="json-textarea"
+          />
+          <button onClick={loadFromJson} className="load-button">
+            Load from JSON
+          </button>
+        </div>
       </div>
     </div>
   );
