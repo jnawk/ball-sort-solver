@@ -19,11 +19,13 @@ export function PuzzleBuilder() {
     return counts;
   }, [tubes]);
 
-  // Check if state is valid (4 of each color used)
+  // Check if state is valid (4 of each color used, tubes either full or empty)
   const isValidState = useMemo(() => {
     const usedColors = Object.keys(colorCounts) as Color[];
-    return usedColors.length > 0 && usedColors.every(color => colorCounts[color] === 4);
-  }, [colorCounts]);
+    const hasValidColors = usedColors.length > 0 && usedColors.every(color => colorCounts[color] === 4);
+    const hasValidTubes = tubes.every(tube => tube.length === 0 || tube.length === 4);
+    return hasValidColors && hasValidTubes;
+  }, [colorCounts, tubes]);
 
   const handleTubeClick = (tubeIndex: number) => {
     if (!selectedColor) return;
@@ -82,7 +84,7 @@ export function PuzzleBuilder() {
           {isValidState ? (
             <span className="valid">✅ Valid puzzle state!</span>
           ) : (
-            <span className="invalid">❌ Need exactly 4 of each color</span>
+            <span className="invalid">❌ Need exactly 4 of each color & tubes must be full or empty</span>
           )}
         </div>
         
