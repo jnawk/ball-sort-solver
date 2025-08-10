@@ -1,5 +1,5 @@
 // Color type definition
-export type Color = 
+export type Color =
   | "Re" // Red
   | "Or" // Orange
   | "Ye" // Yellow
@@ -17,26 +17,26 @@ export type Color =
   | "Bl"; // Black
 
 export interface Move {
-  fromTubeNumber: number;
-  toTubeNumber: number;
+  fromBoxNumber: number;
+  toBoxNumber: number;
 }
 
 export class State {
-  tubes: Color[][];
+  boxes: Color[][];
 
-  constructor(tubes: Color[][]) {
-    this.tubes = tubes.map(tube => [...tube]);
+  constructor(boxes: Color[][]) {
+    this.boxes = boxes.map(box => [...box]);
     this.validate();
   }
 
   private validate(): void {
     const validColors: Set<Color> = new Set([
-      "Re", "Or", "Ye", "LG", "BG", "DG", "Cy", "LB", 
+      "Re", "Or", "Ye", "LG", "BG", "DG", "Cy", "LB",
       "DB", "Pu", "Ma", "Pi", "Wh", "Gr", "Bl"
     ]);
-    
-    for (const tube of this.tubes) {
-      for (const ball of tube) {
+
+    for (const box of this.boxes) {
+      for (const ball of box) {
         if (!validColors.has(ball)) {
           throw new Error(`Invalid color: ${ball}`);
         }
@@ -45,24 +45,24 @@ export class State {
   }
 
   equivalentTo(other: State): boolean {
-    const sortedThis = this.tubes.map(tube => tube.join("")).sort();
-    const sortedOther = other.tubes.map(tube => tube.join("")).sort();
+    const sortedThis = this.boxes.map(box => box.join("")).sort();
+    const sortedOther = other.boxes.map(box => box.join("")).sort();
     return JSON.stringify(sortedThis) === JSON.stringify(sortedOther);
   }
 
   get solved(): boolean {
     // Count balls of each color
     const colorCounts: Map<Color, number> = new Map();
-    for (const tube of this.tubes) {
-      for (const ball of tube) {
+    for (const box of this.boxes) {
+      for (const ball of box) {
         colorCounts.set(ball, (colorCounts.get(ball) || 0) + 1);
       }
     }
 
-    // Check each tube is either empty or has exactly 4 balls of one color
-    for (const tube of this.tubes) {
-      if (tube.length === 0) continue;
-      if (tube.length !== 4 || !tube.every(ball => ball === tube[0])) {
+    // Check each box is either empty or has exactly 4 balls of one color
+    for (const box of this.boxes) {
+      if (box.length === 0) continue;
+      if (box.length !== 4 || !box.every(ball => ball === box[0])) {
         return false;
       }
     }
@@ -79,16 +79,16 @@ export class State {
 
   get moves(): Move[] {
     const moves: Move[] = [];
-    for (let fromIdx = 0; fromIdx < this.tubes.length; fromIdx++) {
-      const fromTube = this.tubes[fromIdx];
-      if (fromTube.length === 0) continue;
+    for (let fromIdx = 0; fromIdx < this.boxes.length; fromIdx++) {
+      const fromBox = this.boxes[fromIdx];
+      if (fromBox.length === 0) continue;
 
-      for (let toIdx = 0; toIdx < this.tubes.length; toIdx++) {
-        const toTube = this.tubes[toIdx];
-        if (fromIdx === toIdx || toTube.length >= 4) continue;
-        
-        if (toTube.length === 0 || toTube[toTube.length - 1] === fromTube[fromTube.length - 1]) {
-          moves.push({ fromTubeNumber: fromIdx, toTubeNumber: toIdx });
+      for (let toIdx = 0; toIdx < this.boxes.length; toIdx++) {
+        const toBox = this.boxes[toIdx];
+        if (fromIdx === toIdx || toBox.length >= 4) continue;
+
+        if (toBox.length === 0 || toBox[toBox.length - 1] === fromBox[fromBox.length - 1]) {
+          moves.push({ fromBoxNumber: fromIdx, toBoxNumber: toIdx });
         }
       }
     }
@@ -96,29 +96,29 @@ export class State {
   }
 
   applyMove(move: Move): State {
-    const newTubes = this.tubes.map(tube => [...tube]);
-    const ball = newTubes[move.fromTubeNumber].pop()!;
-    newTubes[move.toTubeNumber].push(ball);
-    return new State(newTubes);
+    const newBoxes = this.boxes.map(box => [...box]);
+    const ball = newBoxes[move.fromBoxNumber].pop()!;
+    newBoxes[move.toBoxNumber].push(ball);
+    return new State(newBoxes);
   }
 
   toList(): string[] {
-    return this.tubes.map(tube => tube.join(""));
+    return this.boxes.map(box => box.join(""));
   }
 
   canonicalKey(): string {
-    return JSON.stringify(this.tubes.map(tube => tube.join("")).sort());
+    return JSON.stringify(this.boxes.map(box => box.join("")).sort());
   }
 }
 
-export function fromTopDown(tubes: Color[][]): State {
-  return new State(tubes.map(tube => [...tube]));
+export function fromTopDown(boxes: Color[][]): State {
+  return new State(boxes.map(box => [...box]));
 }
 
 export function toOneBased(moves: Move[]): Move[] {
   return moves.map(move => ({
-    fromTubeNumber: move.fromTubeNumber + 1,
-    toTubeNumber: move.toTubeNumber + 1
+    fromBoxNumber: move.fromBoxNumber + 1,
+    toBoxNumber: move.toBoxNumber + 1
   }));
 }
 
@@ -134,7 +134,7 @@ export interface SolveResult {
 
 export async function solve(initialState: State, progressCallback?: (processed: number, queued: number) => void): Promise<SolveResult> {
   const startTime = performance.now();
-  
+
   if (initialState.solved) {
     return {
       finalState: initialState,
@@ -186,7 +186,7 @@ export async function solve(initialState: State, progressCallback?: (processed: 
         console.log(`Total time: ${totalTime.toFixed(2)}s`);
         console.log(`States processed: ${processed}`);
         console.log(`Solution length: ${newPath.length} moves`);
-        
+
         return {
           finalState: newState,
           moves: newPath,

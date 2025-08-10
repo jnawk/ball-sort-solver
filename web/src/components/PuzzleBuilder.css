@@ -55,7 +55,7 @@
   }
 }
 
-.tubes-container {
+.boxes-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,7 +67,7 @@
   margin-right: auto;
 }
 
-.tube-row {
+.box-row {
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -425,11 +425,11 @@
   color: #666;
 }
 
-.tube-count-control {
+.box-count-control {
   margin: 15px 0;
 }
 
-.tube-count-control label {
+.box-count-control label {
   display: block;
   margin-bottom: 5px;
   font-size: 14px;
@@ -437,7 +437,7 @@
   color: #333;
 }
 
-.tube-count-slider {
+.box-count-slider {
   width: 200px;
 }
 

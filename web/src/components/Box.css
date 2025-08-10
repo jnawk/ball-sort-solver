@@ -1,17 +1,17 @@
-.tube {
+.box {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.tube-label {
+.box-label {
   font-size: 14px;
   font-weight: bold;
   margin-bottom: 5px;
   color: #666;
 }
 
-.tube-cells {
+.box-cells {
   display: flex;
   flex-direction: column;
   border: 3px solid #333;
@@ -20,7 +20,7 @@
   padding: 5px;
 }
 
-.tube-cell {
+.box-cell {
   width: 40px;
   height: 40px;
   margin: 2px;
@@ -34,6 +34,6 @@
   transition: all 0.2s;
 }
 
-.tube-cell:hover {
+.box-cell:hover {
   transform: scale(1.1);
 }

@@ -1,14 +1,14 @@
 import { Color } from '../solver';
 import { getColorInfo } from '../types';
-import './Tube.css';
+import './Box.css';
 
-interface TubeProps {
+interface BoxProps {
   balls: Color[];
   onCellClick: () => void;
-  tubeIndex: number;
+  boxIndex: number;
 }
 
-export function Tube({ balls, onCellClick, tubeIndex }: TubeProps) {
+export function Box({ balls, onCellClick, boxIndex }: BoxProps) {
   // Create 4 cells, filled from bottom up
   const cells = [];
   for (let i = 3; i >= 0; i--) {
@@ -16,7 +16,7 @@ export function Tube({ balls, onCellClick, tubeIndex }: TubeProps) {
     cells.push(
       <div
         key={i}
-        className="tube-cell"
+        className="box-cell"
         onClick={onCellClick}
         style={{
           backgroundColor: ball ? getColorInfo(ball).color : 'transparent',
@@ -29,9 +29,9 @@ export function Tube({ balls, onCellClick, tubeIndex }: TubeProps) {
   }
 
   return (
-    <div className="tube">
-      <div className="tube-label">Tube {tubeIndex + 1}</div>
-      <div className="tube-cells">
+    <div className="box">
+      <div className="box-label">Box {boxIndex + 1}</div>
+      <div className="box-cells">
         {cells}
       </div>
     </div>

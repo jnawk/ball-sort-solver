@@ -1,0 +1,11 @@
+{
+  "acknowledged-issue-numbers": [
+    34892
+  ],
+  "aws:account": "232271975773",
+  "aws:region": "ap-southeast-2",
+  "hosted-zone:account=232271975773:domainName=ballsortsolver.click:region=ap-southeast-2": {
+    "Id": "/hostedzone/Z0092652ML9T8JN83RHH",
+    "Name": "ballsortsolver.click."
+  }
+}

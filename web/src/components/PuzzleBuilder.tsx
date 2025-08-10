@@ -1,43 +1,43 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Color, State, fromTopDown, solve, toOneBased, SolveResult } from '../solver';
+import { Color, fromTopDown, solve, toOneBased, SolveResult } from '../solver';
 import { ColorPalette } from './ColorPalette';
-import { Tube } from './Tube';
+import { Box } from './Box';
 import { COLOR_MAP, getColorInfo } from '../types';
 import './PuzzleBuilder.css';
 
 export function PuzzleBuilder() {
   const [selectedColor, setSelectedColor] = useState<Color | null>('Re');
-  const [tubes, setTubes] = useState<Color[][]>([[], [], [], []]);
+  const [boxes, setBoxes] = useState<Color[][]>([[], [], [], []]);
   const [solveResult, setSolveResult] = useState<SolveResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [animationTubes, setAnimationTubes] = useState<Color[][]>([]);
+  const [animationBoxes, setAnimationBoxes] = useState<Color[][]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [movesPerSecond, setMovesPerSecond] = useState(2); // moves per second
   const [solveProgress, setSolveProgress] = useState({ processed: 0, queued: 0 });
-  const animationTimer = useRef<NodeJS.Timeout | null>(null);
+  const animationTimer = useRef<number | null>(null);
   const [puzzleJson, setPuzzleJson] = useState('[[],[],[],[]]');
-  const [tubeCount, setTubeCount] = useState(4);
+  const [boxCount, setBoxCount] = useState(4);
   const [showJson, setShowJson] = useState(false);
 
   // Count colors to validate state
   const colorCounts = useMemo(() => {
     const counts: Record<Color, number> = {} as Record<Color, number>;
-    tubes.forEach(tube => {
-      tube.forEach(ball => {
+    boxes.forEach(box => {
+      box.forEach(ball => {
         counts[ball] = (counts[ball] || 0) + 1;
       });
     });
     return counts;
-  }, [tubes]);
+  }, [boxes]);
 
-  // Check if state is valid (4 of each color used, tubes either full or empty)
+  // Check if state is valid (4 of each color used, boxes either full or empty)
   const isValidState = useMemo(() => {
     const usedColors = Object.keys(colorCounts) as Color[];
     const hasValidColors = usedColors.length > 0 && usedColors.every(color => colorCounts[color] === 4);
-    const hasValidTubes = tubes.every(tube => tube.length === 0 || tube.length === 4);
-    return hasValidColors && hasValidTubes;
-  }, [colorCounts, tubes]);
+    const hasValidBoxes = boxes.every(box => box.length === 0 || box.length === 4);
+    return hasValidColors && hasValidBoxes;
+  }, [colorCounts, boxes]);
 
   // Auto-select first available color when current selection becomes unavailable
   useEffect(() => {
@@ -47,40 +47,40 @@ export function PuzzleBuilder() {
     }
   }, [colorCounts, selectedColor]);
 
-  const handleTubeClick = (tubeIndex: number) => {
+  const handleBoxClick = (boxIndex: number) => {
     if (!selectedColor) return;
 
     // Don't allow adding more than 4 of any color
     if ((colorCounts[selectedColor] || 0) >= 4) return;
 
-    setTubes(prev => {
-      const newTubes = [...prev];
+    setBoxes(prev => {
+      const newBoxes = [...prev];
 
-      // Add ball to tube if there's space
-      if (newTubes[tubeIndex].length < 4) {
-        newTubes[tubeIndex] = [...newTubes[tubeIndex], selectedColor];
+      // Add ball to box if there's space
+      if (newBoxes[boxIndex].length < 4) {
+        newBoxes[boxIndex] = [...newBoxes[boxIndex], selectedColor];
       }
 
-      // Ensure we always have at least 2 empty tubes
-      const emptyTubes = newTubes.filter(tube => tube.length === 0).length;
-      if (emptyTubes < 2) {
-        newTubes.push([]);
+      // Ensure we always have at least 2 empty boxes
+      const emptyBoxes = newBoxes.filter(box => box.length === 0).length;
+      if (emptyBoxes < 2) {
+        newBoxes.push([]);
       }
 
       // Update JSON representation
-      setPuzzleJson(JSON.stringify(newTubes));
+      setPuzzleJson(JSON.stringify(newBoxes));
 
-      return newTubes;
+      return newBoxes;
     });
   };
 
   const clearAll = () => {
-    const emptyTubes = Array(tubeCount).fill([]);
-    setTubes(emptyTubes);
-    setPuzzleJson(JSON.stringify(emptyTubes));
+    const emptyBoxes = Array(boxCount).fill([]);
+    setBoxes(emptyBoxes);
+    setPuzzleJson(JSON.stringify(emptyBoxes));
     setSelectedColor('Re');
     setSolveResult(null);
-    setAnimationTubes([]);
+    setAnimationBoxes([]);
     setIsPlaying(false);
     setCurrentMoveIndex(0);
     if (animationTimer.current) {
@@ -88,43 +88,43 @@ export function PuzzleBuilder() {
     }
   };
 
-  const handleTubeCountChange = (newCount: number) => {
-    setTubeCount(newCount);
-    setTubes(prev => {
-      let newTubes = [...prev];
+  const handleBoxCountChange = (newCount: number) => {
+    setBoxCount(newCount);
+    setBoxes(prev => {
+      let newBoxes = [...prev];
 
       if (newCount > prev.length) {
-        // Add empty tubes
-        while (newTubes.length < newCount) {
-          newTubes.push([]);
+        // Add empty boxes
+        while (newBoxes.length < newCount) {
+          newBoxes.push([]);
         }
       } else if (newCount < prev.length) {
-        // Remove tubes from end, ensuring 2 empty remain
-        newTubes = newTubes.slice(0, newCount);
-        const emptyCount = newTubes.filter(tube => tube.length === 0).length;
+        // Remove boxes from end, ensuring 2 empty remain
+        newBoxes = newBoxes.slice(0, newCount);
+        const emptyCount = newBoxes.filter(box => box.length === 0).length;
         if (emptyCount < 2) {
-          // Clear tubes from end until we have 2 empty
-          for (let i = newTubes.length - 1; i >= 0 && emptyCount < 2; i--) {
-            if (newTubes[i].length > 0) {
-              newTubes[i] = [];
+          // Clear boxes from end until we have 2 empty
+          for (let i = newBoxes.length - 1; i >= 0 && emptyCount < 2; i--) {
+            if (newBoxes[i].length > 0) {
+              newBoxes[i] = [];
             }
           }
         }
       }
 
-      setPuzzleJson(JSON.stringify(newTubes));
-      return newTubes;
+      setPuzzleJson(JSON.stringify(newBoxes));
+      return newBoxes;
     });
   };
 
   const loadFromJson = () => {
     try {
       const parsed = JSON.parse(puzzleJson);
-      if (Array.isArray(parsed) && parsed.every(tube => Array.isArray(tube))) {
-        setTubes(parsed);
-        setTubeCount(parsed.length);
+      if (Array.isArray(parsed) && parsed.every(box => Array.isArray(box))) {
+        setBoxes(parsed);
+        setBoxCount(parsed.length);
         setSolveResult(null);
-        setAnimationTubes([]);
+        setAnimationBoxes([]);
         setIsPlaying(false);
         setCurrentMoveIndex(0);
         if (animationTimer.current) {
@@ -143,9 +143,9 @@ export function PuzzleBuilder() {
     setSolveResult(null);
 
     try {
-      // Convert tubes to bottom-up format for solver
-      console.log('UI tubes (top-down):', tubes);
-      const initialState = fromTopDown(tubes);
+      // Convert boxes to bottom-up format for solver
+      console.log('UI boxes (top-down):', boxes);
+      const initialState = fromTopDown(boxes);
       console.log('Solver state (bottom-up):', initialState.toList());
 
       // Use setTimeout to allow UI to update before starting solve
@@ -155,7 +155,7 @@ export function PuzzleBuilder() {
         });
         setSolveResult(result);
         // Initialize animation with original state
-        setAnimationTubes([...tubes]);
+        setAnimationBoxes([...boxes]);
         setCurrentMoveIndex(0);
         setIsLoading(false);
         setSolveProgress({ processed: 0, queued: 0 });
@@ -171,32 +171,32 @@ export function PuzzleBuilder() {
 
     setIsPlaying(true);
     setCurrentMoveIndex(0);
-    setAnimationTubes([...tubes]);
+    setAnimationBoxes([...boxes]);
 
-    const playNextMove = (moveIndex: number, currentTubes: Color[][]) => {
+    const playNextMove = (moveIndex: number, currentBoxes: Color[][]) => {
       if (moveIndex >= solveResult.moves!.length) {
         setIsPlaying(false);
         return;
       }
 
       const move = solveResult.moves![moveIndex];
-      const newTubes = [...currentTubes];
+      const newBoxes = [...currentBoxes];
 
       // Apply the move
-      // UI tubes are top-down, solver moves are for bottom-up
-      // So we need to remove from the end (bottom) and add to end (bottom) of UI tubes
-      const ball = newTubes[move.fromTubeNumber].pop()!;
-      newTubes[move.toTubeNumber].push(ball);
+      // UI boxes are top-down, solver moves are for bottom-up
+      // So we need to remove from the end (bottom) and add to end (bottom) of UI boxes
+      const ball = newBoxes[move.fromBoxNumber].pop()!;
+      newBoxes[move.toBoxNumber].push(ball);
 
-      setAnimationTubes([...newTubes]);
+      setAnimationBoxes([...newBoxes]);
       setCurrentMoveIndex(moveIndex + 1);
 
       animationTimer.current = setTimeout(() => {
-        playNextMove(moveIndex + 1, newTubes);
+        playNextMove(moveIndex + 1, newBoxes);
       }, 1000 / movesPerSecond);
     };
 
-    playNextMove(0, [...tubes]);
+    playNextMove(0, [...boxes]);
   };
 
   const stopAnimation = () => {
@@ -211,14 +211,14 @@ export function PuzzleBuilder() {
     // Load from JSON to reset to original puzzle state
     try {
       const parsed = JSON.parse(puzzleJson);
-      if (Array.isArray(parsed) && parsed.every(tube => Array.isArray(tube))) {
-        setTubes(parsed);
-        setAnimationTubes([]);
+      if (Array.isArray(parsed) && parsed.every(box => Array.isArray(box))) {
+        setBoxes(parsed);
+        setAnimationBoxes([]);
         setCurrentMoveIndex(0);
       }
     } catch (e) {
       // Fallback if JSON is invalid
-      setAnimationTubes([]);
+      setAnimationBoxes([]);
       setCurrentMoveIndex(0);
     }
   };
@@ -237,87 +237,87 @@ export function PuzzleBuilder() {
       <div className="main-layout">
         <div className="puzzle-area">
           <div className="puzzle-content">
-            <div className="tubes-container" data-tube-count={tubes.length}>
+            <div className="boxes-container" data-box-count={boxes.length}>
         {(() => {
-          const displayTubes = animationTubes.length > 0 ? animationTubes : tubes;
+          const displayBoxes = animationBoxes.length > 0 ? animationBoxes : boxes;
 
-          if (tubes.length <= 5) {
-            // Single row for 1-5 tubes
+          if (boxes.length <= 5) {
+            // Single row for 1-5 boxes
             return (
-              <div className="tube-row">
-                {displayTubes.map((tube, index) => (
-                  <Tube
+              <div className="box-row">
+                {displayBoxes.map((box, index) => (
+                  <Box
                     key={index}
-                    balls={tube}
-                    onCellClick={() => handleTubeClick(index)}
-                    tubeIndex={index}
+                    balls={box}
+                    onCellClick={() => handleBoxClick(index)}
+                    boxIndex={index}
                   />
                 ))}
               </div>
             );
-          } else if (tubes.length <= 16) {
-            // Two rows for 6-16 tubes
-            const firstRowCount = Math.ceil(tubes.length / 2);
+          } else if (boxes.length <= 16) {
+            // Two rows for 6-16 boxes
+            const firstRowCount = Math.ceil(boxes.length / 2);
             return (
               <>
-                <div className="tube-row">
-                  {displayTubes.slice(0, firstRowCount).map((tube, index) => (
-                    <Tube
+                <div className="box-row">
+                  {displayBoxes.slice(0, firstRowCount).map((box, index) => (
+                    <Box
                       key={index}
-                      balls={tube}
-                      onCellClick={() => handleTubeClick(index)}
-                      tubeIndex={index}
+                      balls={box}
+                      onCellClick={() => handleBoxClick(index)}
+                      boxIndex={index}
                     />
                   ))}
                 </div>
-                <div className="tube-row">
-                  {displayTubes.slice(firstRowCount).map((tube, index) => (
-                    <Tube
+                <div className="box-row">
+                  {displayBoxes.slice(firstRowCount).map((box, index) => (
+                    <Box
                       key={index + firstRowCount}
-                      balls={tube}
-                      onCellClick={() => handleTubeClick(index + firstRowCount)}
-                      tubeIndex={index + firstRowCount}
+                      balls={box}
+                      onCellClick={() => handleBoxClick(index + firstRowCount)}
+                      boxIndex={index + firstRowCount}
                     />
                   ))}
                 </div>
               </>
             );
           } else {
-            // Three rows for 17+ tubes
-            const tubesPerRow = Math.ceil(tubes.length / 3);
-            const firstRowCount = tubesPerRow;
-            const secondRowCount = tubesPerRow;
-            const thirdRowCount = tubes.length - firstRowCount - secondRowCount;
+            // Three rows for 17+ boxes
+            const boxesPerRow = Math.ceil(boxes.length / 3);
+            const firstRowCount = boxesPerRow;
+            const secondRowCount = boxesPerRow;
+            // const thirdRowCount = boxes.length - firstRowCount - secondRowCount;
 
             return (
               <>
-                <div className="tube-row">
-                  {displayTubes.slice(0, firstRowCount).map((tube, index) => (
-                    <Tube
+                <div className="box-row">
+                  {displayBoxes.slice(0, firstRowCount).map((box, index) => (
+                    <Box
                       key={index}
-                      balls={tube}
-                      onCellClick={() => handleTubeClick(index)}
-                      tubeIndex={index}
+                      balls={box}
+                      onCellClick={() => handleBoxClick(index)}
+                      boxIndex={index}
                     />
                   ))}
                 </div>
-                <div className="tube-row">
-                  {displayTubes.slice(firstRowCount, firstRowCount + secondRowCount).map((tube, index) => (
-                    <Tube
+                <div className="box-row">
+                  {displayBoxes.slice(firstRowCount, firstRowCount + secondRowCount).map((box, index) => (
+                    <Box
                       key={index + firstRowCount}
-                      balls={tube}
-                      onCellClick={() => handleTubeClick(index + firstRowCount)}
-                      tubeIndex={index + firstRowCount}
+                      balls={box}
+                      onCellClick={() => handleBoxClick(index + firstRowCount)}
+                      boxIndex={index + firstRowCount}
                     />
                   ))}
                 </div>
-                <div className="tube-row">
-                  {displayTubes.slice(firstRowCount + secondRowCount).map((tube, index) => (
-                    <Tube
+                <div className="box-row">
+                  {displayBoxes.slice(firstRowCount + secondRowCount).map((box, index) => (
+                    <Box
                       key={index + firstRowCount + secondRowCount}
-                      balls={tube}
-                      onCellClick={() => handleTubeClick(index + firstRowCount + secondRowCount)}
-                      tubeIndex={index + firstRowCount + secondRowCount}
+                      balls={box}
+                      onCellClick={() => handleBoxClick(index + firstRowCount + secondRowCount)}
+                      boxIndex={index + firstRowCount + secondRowCount}
                     />
                   ))}
                 </div>
@@ -366,15 +366,15 @@ export function PuzzleBuilder() {
         <div className="controls-area">
           <div className="status">
 
-        <div className="tube-count-control">
-          <label>Number of tubes: {tubeCount}</label>
+        <div className="box-count-control">
+          <label>Number of boxes: {boxCount}</label>
           <input
             type="range"
             min="4"
             max="20"
-            value={tubeCount}
-            onChange={(e) => handleTubeCountChange(parseInt(e.target.value))}
-            className="tube-count-slider"
+            value={boxCount}
+            onChange={(e) => handleBoxCountChange(parseInt(e.target.value))}
+            className="box-count-slider"
           />
         </div>
 
@@ -450,7 +450,7 @@ export function PuzzleBuilder() {
                       key={index}
                       className={`move ${index < currentMoveIndex ? 'completed' : ''} ${index === currentMoveIndex ? 'current' : ''}`}
                     >
-                      {move.fromTubeNumber} → {move.toTubeNumber}
+                      {move.fromBoxNumber} → {move.toBoxNumber}
                     </span>
                   ))}
                 </div>

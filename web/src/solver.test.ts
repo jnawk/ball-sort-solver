@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { State, Move, fromTopDown, solve, toOneBased } from "./solver";
+import { State, fromTopDown, solve, toOneBased, Color } from "./solver";
 
-describe("Lyfoes Solver", () => {
+describe("Ball Sort Solver", () => {
   it("should detect equivalent states", () => {
     const state1 = new State([
       ["DB", "Ye", "DB", "DB"],
@@ -30,7 +30,7 @@ describe("Lyfoes Solver", () => {
       [],
     ]);
 
-    expect(state1.tubes).not.toEqual(state2.tubes);
+    expect(state1.boxes).not.toEqual(state2.boxes);
     expect(state1.equivalentTo(state2)).toBe(true);
     expect(state1.equivalentTo(state3)).toBe(false);
   });
@@ -71,12 +71,12 @@ describe("Lyfoes Solver", () => {
     const moves = state.moves;
     expect(moves).toHaveLength(8);
 
-    // Should be able to move from each filled tube to each empty tube
+    // Should be able to move from each filled box to each empty box
     for (let fromNumber = 0; fromNumber < 4; fromNumber++) {
       for (let toNumber = 4; toNumber < 6; toNumber++) {
         expect(moves).toContainEqual({
-          fromTubeNumber: fromNumber,
-          toTubeNumber: toNumber,
+          fromBoxNumber: fromNumber,
+          toBoxNumber: toNumber,
         });
       }
     }
@@ -87,7 +87,7 @@ describe("Lyfoes Solver", () => {
       new State([
         ["BG", "Ye", "BG", "Re"],
         ["Re", "Re", "BG", "DB"],
-        ["XX", "Ye", "BG", "Re"], // Invalid color "XX"
+        [("XX" as Color), "Ye", "BG", "Re"], // Invalid color "XX"
         ["DB", "Ye", "DB", "DB"],
         [],
         [],
@@ -95,7 +95,7 @@ describe("Lyfoes Solver", () => {
     }).toThrow("Invalid color: XX");
   });
 
-  it("should solve a simple puzzle", () => {
+  it("should solve a simple puzzle", async () => {
     const initialState = fromTopDown([
       ["Re", "DB", "BG", "DB"],
       ["Ma", "DB", "BG", "Ye"],
@@ -107,7 +107,7 @@ describe("Lyfoes Solver", () => {
       [],
     ]);
 
-    const result = solve(initialState);
+    const result = await solve(initialState);
 
     expect(result.moves).not.toBeNull();
     expect(result.finalState.solved).toBe(true);
@@ -125,12 +125,12 @@ describe("Lyfoes Solver", () => {
       const oneBasedMoves = toOneBased(result.moves);
       console.log(
         "Moves (1-based):",
-        oneBasedMoves.map((m) => [m.fromTubeNumber, m.toTubeNumber])
+        oneBasedMoves.map((m) => [m.fromBoxNumber, m.toBoxNumber])
       );
     }
   });
 
-  it("should solve level 4 puzzle", () => {
+  it("should solve level 4 puzzle", async () => {
     const initialState = fromTopDown([
       ["Re", "Pu", "Pi", "Ma"],
       ["LB", "Or", "Re", "Gr"],
@@ -149,7 +149,7 @@ describe("Lyfoes Solver", () => {
       [],
     ]);
 
-    const result = solve(initialState);
+    const result = await solve(initialState);
 
     expect(result.moves).not.toBeNull();
     expect(result.finalState.solved).toBe(true);
@@ -163,7 +163,7 @@ describe("Lyfoes Solver", () => {
     console.log(JSON.stringify(result.finalState.toList(), null, 2));
   });
 
-  it("should solve level 5 puzzle", () => {
+  it("should solve level 5 puzzle", async () => {
     const initialState = fromTopDown([
       ["Or", "BG", "Re", "Cy"],
       ["DB", "BG", "LG", "Or"],
@@ -182,7 +182,7 @@ describe("Lyfoes Solver", () => {
       [],
     ]);
 
-    const result = solve(initialState);
+    const result = await solve(initialState);
 
     expect(result.moves).not.toBeNull();
     expect(result.finalState.solved).toBe(true);
