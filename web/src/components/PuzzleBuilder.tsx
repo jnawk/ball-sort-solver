@@ -14,6 +14,7 @@ export function PuzzleBuilder() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [movesPerSecond, setMovesPerSecond] = useState(2); // moves per second
+  const [solveProgress, setSolveProgress] = useState({ processed: 0, queued: 0 });
   const animationTimer = useRef<NodeJS.Timeout | null>(null);
   const [puzzleJson, setPuzzleJson] = useState('[[],[],[],[]]');
   const [tubeCount, setTubeCount] = useState(4);
@@ -48,7 +49,7 @@ export function PuzzleBuilder() {
 
   const handleTubeClick = (tubeIndex: number) => {
     if (!selectedColor) return;
-    
+
     // Don't allow adding more than 4 of any color
     if ((colorCounts[selectedColor] || 0) >= 4) return;
 
@@ -91,7 +92,7 @@ export function PuzzleBuilder() {
     setTubeCount(newCount);
     setTubes(prev => {
       let newTubes = [...prev];
-      
+
       if (newCount > prev.length) {
         // Add empty tubes
         while (newTubes.length < newCount) {
@@ -110,7 +111,7 @@ export function PuzzleBuilder() {
           }
         }
       }
-      
+
       setPuzzleJson(JSON.stringify(newTubes));
       return newTubes;
     });
@@ -146,15 +147,18 @@ export function PuzzleBuilder() {
       console.log('UI tubes (top-down):', tubes);
       const initialState = fromTopDown(tubes);
       console.log('Solver state (bottom-up):', initialState.toList());
-      
+
       // Use setTimeout to allow UI to update before starting solve
-      setTimeout(() => {
-        const result = solve(initialState);
+      setTimeout(async () => {
+        const result = await solve(initialState, (processed, queued) => {
+          setSolveProgress({ processed, queued });
+        });
         setSolveResult(result);
         // Initialize animation with original state
         setAnimationTubes([...tubes]);
         setCurrentMoveIndex(0);
         setIsLoading(false);
+        setSolveProgress({ processed: 0, queued: 0 });
       }, 10);
     } catch (error) {
       console.error('Solver error:', error);
@@ -236,7 +240,7 @@ export function PuzzleBuilder() {
             <div className="tubes-container" data-tube-count={tubes.length}>
         {(() => {
           const displayTubes = animationTubes.length > 0 ? animationTubes : tubes;
-          
+
           if (tubes.length <= 5) {
             // Single row for 1-5 tubes
             return (
@@ -284,7 +288,7 @@ export function PuzzleBuilder() {
             const firstRowCount = tubesPerRow;
             const secondRowCount = tubesPerRow;
             const thirdRowCount = tubes.length - firstRowCount - secondRowCount;
-            
+
             return (
               <>
                 <div className="tube-row">
@@ -323,14 +327,14 @@ export function PuzzleBuilder() {
         })()}
             </div>
           </div>
-          
+
           <div className="puzzle-bottom">
             <div className="puzzle-status">
               <div className="color-counts-compact">
                 {Object.entries(colorCounts).length > 0 ? (
                   Object.entries(colorCounts).map(([color, count]) => (
-                    <div 
-                      key={color} 
+                    <div
+                      key={color}
                       className={`color-square ${count === 4 ? 'valid' : 'invalid'}`}
                       style={{ backgroundColor: getColorInfo(color as Color).color }}
                     >
@@ -341,7 +345,7 @@ export function PuzzleBuilder() {
                   <div className="color-square placeholder">&nbsp;</div>
                 )}
               </div>
-              
+
               <div className="validation-compact">
                 {isValidState ? (
                   <span className="valid">✅ Valid</span>
@@ -350,7 +354,7 @@ export function PuzzleBuilder() {
                 )}
               </div>
             </div>
-            
+
             <ColorPalette
               selectedColor={selectedColor}
               onColorSelect={setSelectedColor}
@@ -358,7 +362,7 @@ export function PuzzleBuilder() {
             />
           </div>
         </div>
-        
+
         <div className="controls-area">
           <div className="status">
 
@@ -388,26 +392,29 @@ export function PuzzleBuilder() {
               {isLoading ? '🔄 Solving...' : 'Solve Puzzle'}
             </button>
           </div>
+          <div className="solve-progress">
+            <small>Processed: {solveProgress.processed.toLocaleString()} | Queue: {solveProgress.queued.toLocaleString()}</small>
+          </div>
 
           <div className="animation-controls">
             <div className="play-controls">
-              <button 
-                onClick={playAnimation} 
+              <button
+                onClick={playAnimation}
                 disabled={isPlaying || !solveResult?.moves}
                 className="play-button"
               >
                 ▶️ Play
               </button>
-              
-              <button 
-                onClick={stopAnimation} 
+
+              <button
+                onClick={stopAnimation}
                 disabled={!isPlaying || !solveResult?.moves}
                 className="stop-button"
               >
                 ⏹️ Stop
               </button>
-              
-              <button 
+
+              <button
                 onClick={resetAnimation}
                 disabled={!solveResult?.moves}
                 className="reset-button"
@@ -416,7 +423,8 @@ export function PuzzleBuilder() {
               </button>
             </div>
           </div>
-          
+
+
           <div className="speed-control">
             <label>Animation Speed: {movesPerSecond} moves/sec</label>
             <input
@@ -446,13 +454,13 @@ export function PuzzleBuilder() {
                     </span>
                   ))}
                 </div>
-                
+
                 <div className="progress">
                   Move {currentMoveIndex} of {solveResult.moves.length}
                 </div>
               </div>
             )}
-            
+
             <div className="solution-stats">
               <h3>Solution Found!</h3>
               <p>Time: {solveResult.stats.totalTime.toFixed(2)}s</p>
@@ -462,13 +470,13 @@ export function PuzzleBuilder() {
           </div>
         )}
 
-        <button 
-          onClick={() => setShowJson(!showJson)} 
+        <button
+          onClick={() => setShowJson(!showJson)}
           className="json-toggle"
         >
           {showJson ? '▼' : '▶'} JSON
         </button>
-        
+
         {showJson && (
           <div className="puzzle-json">
             <textarea

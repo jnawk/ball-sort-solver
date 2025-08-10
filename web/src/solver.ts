@@ -132,7 +132,7 @@ export interface SolveResult {
   };
 }
 
-export function solve(initialState: State): SolveResult {
+export async function solve(initialState: State, progressCallback?: (processed: number, queued: number) => void): Promise<SolveResult> {
   const startTime = performance.now();
   
   if (initialState.solved) {
@@ -155,9 +155,18 @@ export function solve(initialState: State): SolveResult {
     const [state, path] = queue.shift()!;
     processed++;
 
-    if (processed % 10000 === 0) {
+    if (processed % 1000 === 0) {
       const elapsed = (performance.now() - startTime) / 1000;
-      console.log(`Processed ${processed} states, queue: ${queue.length}, visited: ${visited.size}, elapsed: ${elapsed.toFixed(1)}s`);
+      if (processed % 10000 === 0) {
+        console.log(`Processed ${processed} states, queue: ${queue.length}, visited: ${visited.size}, elapsed: ${elapsed.toFixed(1)}s`);
+      }
+      if (progressCallback) {
+        progressCallback(processed, queue.length);
+      }
+      // Yield control every 1000 states to allow UI updates
+      if (processed % 1000 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
     }
 
     for (const move of state.moves) {

@@ -419,6 +419,12 @@
   background: #5a6268;
 }
 
+.solve-progress {
+  margin-top: 5px;
+  font-size: 11px;
+  color: #666;
+}
+
 .tube-count-control {
   margin: 15px 0;
 }
