@@ -7,7 +7,7 @@ import './PuzzleBuilder.css';
 
 export function PuzzleBuilder() {
   const [selectedColor, setSelectedColor] = useState<Color | null>('Re');
-  const [tubes, setTubes] = useState<Color[][]>([[], []]);
+  const [tubes, setTubes] = useState<Color[][]>([[], [], [], []]);
   const [solveResult, setSolveResult] = useState<SolveResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [animationTubes, setAnimationTubes] = useState<Color[][]>([]);
@@ -15,7 +15,8 @@ export function PuzzleBuilder() {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [animationSpeed, setAnimationSpeed] = useState(0.5); // seconds between moves
   const animationTimer = useRef<NodeJS.Timeout | null>(null);
-  const [puzzleJson, setPuzzleJson] = useState('[[],[]]');
+  const [puzzleJson, setPuzzleJson] = useState('[[],[],[],[]]');
+  const [tubeCount, setTubeCount] = useState(4);
 
   // Count colors to validate state
   const colorCounts = useMemo(() => {
@@ -72,8 +73,9 @@ export function PuzzleBuilder() {
   };
 
   const clearAll = () => {
-    setTubes([[], []]);
-    setPuzzleJson('[[],[]]');
+    const emptyTubes = Array(tubeCount).fill([]);
+    setTubes(emptyTubes);
+    setPuzzleJson(JSON.stringify(emptyTubes));
     setSelectedColor('Re');
     setSolveResult(null);
     setAnimationTubes([]);
@@ -82,6 +84,35 @@ export function PuzzleBuilder() {
     if (animationTimer.current) {
       clearTimeout(animationTimer.current);
     }
+  };
+
+  const handleTubeCountChange = (newCount: number) => {
+    setTubeCount(newCount);
+    setTubes(prev => {
+      let newTubes = [...prev];
+      
+      if (newCount > prev.length) {
+        // Add empty tubes
+        while (newTubes.length < newCount) {
+          newTubes.push([]);
+        }
+      } else if (newCount < prev.length) {
+        // Remove tubes from end, ensuring 2 empty remain
+        newTubes = newTubes.slice(0, newCount);
+        const emptyCount = newTubes.filter(tube => tube.length === 0).length;
+        if (emptyCount < 2) {
+          // Clear tubes from end until we have 2 empty
+          for (let i = newTubes.length - 1; i >= 0 && emptyCount < 2; i--) {
+            if (newTubes[i].length > 0) {
+              newTubes[i] = [];
+            }
+          }
+        }
+      }
+      
+      setPuzzleJson(JSON.stringify(newTubes));
+      return newTubes;
+    });
   };
 
   const loadFromJson = () => {
@@ -189,43 +220,93 @@ export function PuzzleBuilder() {
       />
 
       <div className="tubes-container" data-tube-count={tubes.length}>
-        {tubes.length <= 5 ? (
-          // Single row for 1-5 tubes
-          <div className="tube-row">
-            {(animationTubes.length > 0 ? animationTubes : tubes).map((tube, index) => (
-              <Tube
-                key={index}
-                balls={tube}
-                onCellClick={() => handleTubeClick(index)}
-                tubeIndex={index}
-              />
-            ))}
-          </div>
-        ) : (
-          // Multiple rows for 6+ tubes
-          <>
-            <div className="tube-row">
-              {(animationTubes.length > 0 ? animationTubes : tubes).slice(0, Math.ceil(tubes.length / 2)).map((tube, index) => (
-                <Tube
-                  key={index}
-                  balls={tube}
-                  onCellClick={() => handleTubeClick(index)}
-                  tubeIndex={index}
-                />
-              ))}
-            </div>
-            <div className="tube-row">
-              {(animationTubes.length > 0 ? animationTubes : tubes).slice(Math.ceil(tubes.length / 2)).map((tube, index) => (
-                <Tube
-                  key={index + Math.ceil(tubes.length / 2)}
-                  balls={tube}
-                  onCellClick={() => handleTubeClick(index + Math.ceil(tubes.length / 2))}
-                  tubeIndex={index + Math.ceil(tubes.length / 2)}
-                />
-              ))}
-            </div>
-          </>
-        )}
+        {(() => {
+          const displayTubes = animationTubes.length > 0 ? animationTubes : tubes;
+          
+          if (tubes.length <= 5) {
+            // Single row for 1-5 tubes
+            return (
+              <div className="tube-row">
+                {displayTubes.map((tube, index) => (
+                  <Tube
+                    key={index}
+                    balls={tube}
+                    onCellClick={() => handleTubeClick(index)}
+                    tubeIndex={index}
+                  />
+                ))}
+              </div>
+            );
+          } else if (tubes.length <= 16) {
+            // Two rows for 6-16 tubes
+            const firstRowCount = Math.ceil(tubes.length / 2);
+            return (
+              <>
+                <div className="tube-row">
+                  {displayTubes.slice(0, firstRowCount).map((tube, index) => (
+                    <Tube
+                      key={index}
+                      balls={tube}
+                      onCellClick={() => handleTubeClick(index)}
+                      tubeIndex={index}
+                    />
+                  ))}
+                </div>
+                <div className="tube-row">
+                  {displayTubes.slice(firstRowCount).map((tube, index) => (
+                    <Tube
+                      key={index + firstRowCount}
+                      balls={tube}
+                      onCellClick={() => handleTubeClick(index + firstRowCount)}
+                      tubeIndex={index + firstRowCount}
+                    />
+                  ))}
+                </div>
+              </>
+            );
+          } else {
+            // Three rows for 17+ tubes
+            const tubesPerRow = Math.ceil(tubes.length / 3);
+            const firstRowCount = tubesPerRow;
+            const secondRowCount = tubesPerRow;
+            const thirdRowCount = tubes.length - firstRowCount - secondRowCount;
+            
+            return (
+              <>
+                <div className="tube-row">
+                  {displayTubes.slice(0, firstRowCount).map((tube, index) => (
+                    <Tube
+                      key={index}
+                      balls={tube}
+                      onCellClick={() => handleTubeClick(index)}
+                      tubeIndex={index}
+                    />
+                  ))}
+                </div>
+                <div className="tube-row">
+                  {displayTubes.slice(firstRowCount, firstRowCount + secondRowCount).map((tube, index) => (
+                    <Tube
+                      key={index + firstRowCount}
+                      balls={tube}
+                      onCellClick={() => handleTubeClick(index + firstRowCount)}
+                      tubeIndex={index + firstRowCount}
+                    />
+                  ))}
+                </div>
+                <div className="tube-row">
+                  {displayTubes.slice(firstRowCount + secondRowCount).map((tube, index) => (
+                    <Tube
+                      key={index + firstRowCount + secondRowCount}
+                      balls={tube}
+                      onCellClick={() => handleTubeClick(index + firstRowCount + secondRowCount)}
+                      tubeIndex={index + firstRowCount + secondRowCount}
+                    />
+                  ))}
+                </div>
+              </>
+            );
+          }
+        })()}
       </div>
 
       <div className="status">
@@ -248,6 +329,18 @@ export function PuzzleBuilder() {
           )}
         </div>
 
+        <div className="tube-count-control">
+          <label>Number of tubes: {tubeCount}</label>
+          <input
+            type="range"
+            min="4"
+            max="20"
+            value={tubeCount}
+            onChange={(e) => handleTubeCountChange(parseInt(e.target.value))}
+            className="tube-count-slider"
+          />
+        </div>
+
         <div className="buttons">
           <button onClick={clearAll} className="clear-button">
             Clear All
@@ -260,15 +353,50 @@ export function PuzzleBuilder() {
           >
             {isLoading ? 'Solving...' : 'Solve Puzzle'}
           </button>
+
+          {solveResult?.moves && (
+            <>
+              <div className="speed-control">
+                <label>Speed: {animationSpeed.toFixed(1)}s</label>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.1"
+                  value={animationSpeed}
+                  onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
+                  className="speed-slider"
+                />
+              </div>
+              
+              <button 
+                onClick={playAnimation} 
+                disabled={isPlaying}
+                className="play-button"
+              >
+                ▶️ Play
+              </button>
+              
+              <button 
+                onClick={stopAnimation} 
+                disabled={!isPlaying}
+                className="stop-button"
+              >
+                ⏹️ Stop
+              </button>
+              
+              <button 
+                onClick={resetAnimation}
+                className="reset-button"
+              >
+                🔄 Reset
+              </button>
+            </>
+          )}
         </div>
 
         {solveResult && (
           <div className="solve-result">
-            <h3>Solution Found!</h3>
-            <p>Time: {solveResult.stats.totalTime.toFixed(2)}s</p>
-            <p>States processed: {solveResult.stats.statesProcessed.toLocaleString()}</p>
-            <p>Solution length: {solveResult.stats.solutionLength} moves</p>
-
             {solveResult.moves && (
               <div className="moves">
                 <h4>Moves (1-based):</h4>
@@ -282,56 +410,18 @@ export function PuzzleBuilder() {
                     </span>
                   ))}
                 </div>
-
-                <div className="animation-controls">
-                  <div className="speed-control">
-                    <label>Animation Speed: {animationSpeed.toFixed(1)}s</label>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="1.0"
-                      step="0.1"
-                      value={animationSpeed}
-                      onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
-                      className="speed-slider"
-                    />
-                  </div>
-
-                  <div className="play-controls">
-                    <button
-                      onClick={playAnimation}
-                      disabled={isPlaying}
-                      className="play-button"
-                    >
-                      ▶️ Play
-                    </button>
-
-                    <button
-                      onClick={stopAnimation}
-                      disabled={!isPlaying}
-                      className="stop-button"
-                    >
-                      ⏹️ Stop
-                    </button>
-
-                    <button
-                      onClick={resetAnimation}
-                      className="reset-button"
-                    >
-                      🔄 Reset
-                    </button>
-                  </div>
-
-                  <div className="progress">
-                    Move {currentMoveIndex} of {solveResult.moves.length}
-                  </div>
+                
+                <div className="progress">
+                  Move {currentMoveIndex} of {solveResult.moves.length}
                 </div>
               </div>
             )}
-
-            <div className="final-state">
-              <h4>Final State:</h4>
-              <pre>{JSON.stringify(solveResult.finalState.toList(), null, 2)}</pre>
+            
+            <div className="solution-stats">
+              <h3>Solution Found!</h3>
+              <p>Time: {solveResult.stats.totalTime.toFixed(2)}s</p>
+              <p>States processed: {solveResult.stats.statesProcessed.toLocaleString()}</p>
+              <p>Solution length: {solveResult.stats.solutionLength} moves</p>
             </div>
           </div>
         )}
