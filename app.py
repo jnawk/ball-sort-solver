@@ -9,6 +9,7 @@ from aws_cdk import (
     aws_certificatemanager as acm,
     aws_iam as iam,
     aws_ssm as ssm,
+    aws_codebuild as codebuild,
     pipelines,
 )
 import constructs
@@ -142,11 +143,14 @@ class BallSortSolverPipeline(cdk.Stack):
             "Synth",
             input=source,
             commands=[
+                "curl -LsSf https://astral.sh/uv/install.sh | sh",
+                "source $HOME/.cargo/env",
                 "npm install -g aws-cdk",
                 "cdk synth",
                 "cd web && npm install && npm run build",
                 f"aws s3 sync web/dist/ s3://{bucket_name}/$CODEBUILD_RESOLVED_SOURCE_VERSION/",
             ],
+            env={"PYTHON_VERSION": "3.12"},
         )
 
         pipeline = pipelines.CodePipeline(
@@ -155,6 +159,12 @@ class BallSortSolverPipeline(cdk.Stack):
             synth=synth_step,
             pipeline_type=codepipeline.PipelineType.V2,
             self_mutation=True,
+            code_build_defaults=pipelines.CodeBuildOptions(
+                build_environment=codebuild.BuildEnvironment(
+                    build_image=codebuild.LinuxBuildImage.STANDARD_7_0,
+                    compute_type=codebuild.ComputeType.SMALL,
+                )
+            ),
         )
 
         deploy_stage = cdk.Stage(self, "Deploy")
