@@ -203,8 +203,19 @@ export function PuzzleBuilder() {
 
   const resetAnimation = () => {
     stopAnimation();
-    setAnimationTubes([...tubes]);
-    setCurrentMoveIndex(0);
+    // Load from JSON to reset to original puzzle state
+    try {
+      const parsed = JSON.parse(puzzleJson);
+      if (Array.isArray(parsed) && parsed.every(tube => Array.isArray(tube))) {
+        setTubes(parsed);
+        setAnimationTubes([]);
+        setCurrentMoveIndex(0);
+      }
+    } catch (e) {
+      // Fallback if JSON is invalid
+      setAnimationTubes([]);
+      setCurrentMoveIndex(0);
+    }
   };
 
   // Cleanup timer on unmount
@@ -384,7 +395,6 @@ export function PuzzleBuilder() {
                 value={animationSpeed}
                 onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
                 className="speed-slider"
-                disabled={!solveResult?.moves}
               />
             </div>
             
