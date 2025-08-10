@@ -2,10 +2,11 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Color, State, fromTopDown, solve, toOneBased, SolveResult } from '../solver';
 import { ColorPalette } from './ColorPalette';
 import { Tube } from './Tube';
+import { COLOR_MAP } from '../types';
 import './PuzzleBuilder.css';
 
 export function PuzzleBuilder() {
-  const [selectedColor, setSelectedColor] = useState<Color | null>(null);
+  const [selectedColor, setSelectedColor] = useState<Color | null>('Re');
   const [tubes, setTubes] = useState<Color[][]>([[], []]);
   const [solveResult, setSolveResult] = useState<SolveResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +35,14 @@ export function PuzzleBuilder() {
     const hasValidTubes = tubes.every(tube => tube.length === 0 || tube.length === 4);
     return hasValidColors && hasValidTubes;
   }, [colorCounts, tubes]);
+
+  // Auto-select first available color when current selection becomes unavailable
+  useEffect(() => {
+    if (selectedColor && (colorCounts[selectedColor] || 0) >= 4) {
+      const firstAvailable = COLOR_MAP.find(colorInfo => (colorCounts[colorInfo.code] || 0) < 4);
+      setSelectedColor(firstAvailable?.code || null);
+    }
+  }, [colorCounts, selectedColor]);
 
   const handleTubeClick = (tubeIndex: number) => {
     if (!selectedColor) return;
@@ -65,6 +74,7 @@ export function PuzzleBuilder() {
   const clearAll = () => {
     setTubes([[], []]);
     setPuzzleJson('[[],[]]');
+    setSelectedColor('Re');
     setSolveResult(null);
     setAnimationTubes([]);
     setIsPlaying(false);
@@ -220,11 +230,15 @@ export function PuzzleBuilder() {
 
       <div className="status">
         <h3>Color Counts:</h3>
-        {Object.entries(colorCounts).map(([color, count]) => (
-          <span key={color} className={`color-count ${count === 4 ? 'valid' : 'invalid'}`}>
-            {color}: {count}/4
-          </span>
-        ))}
+        {Object.entries(colorCounts).length > 0 ? (
+          Object.entries(colorCounts).map(([color, count]) => (
+            <span key={color} className={`color-count ${count === 4 ? 'valid' : 'invalid'}`}>
+              {color}: {count}/4
+            </span>
+          ))
+        ) : (
+          <span>&nbsp;</span>
+        )}
 
         <div className="validation">
           {isValidState ? (
