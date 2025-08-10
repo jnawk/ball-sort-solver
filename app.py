@@ -99,24 +99,49 @@ class BallSortDeployment(cdk.Stack):
             max_ttl=cdk.Duration.seconds(0),
         )
 
-        # CloudFront distribution
+        # Origin Access Control for secure S3 access
+        oac = cloudfront.OriginAccessControl(
+            self,
+            "OAC",
+            description="OAC for webapp bucket",
+            origin_access_control_origin_type=cloudfront.OriginAccessControlOriginType.S3,
+            signing_behavior=cloudfront.OriginAccessControlSigningBehavior.ALWAYS,
+            signing_protocol=cloudfront.OriginAccessControlSigningProtocol.SIGV4,
+        )
+
+        # CloudFront distribution with OAC
         distribution = cloudfront.Distribution(
             self,
             "WebappDistribution",
             domain_names=["ballsortsolver.click", "www.ballsortsolver.click"],
             certificate=certificate,
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3BucketOrigin(bucket, origin_path=f"/{commit_id}"),
+                origin=origins.S3Origin(bucket, origin_path=f"/{commit_id}", origin_access_control=oac),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=no_cache_policy,
             ),
             additional_behaviors={
                 "assets/*": cloudfront.BehaviorOptions(
-                    origin=origins.S3BucketOrigin(bucket, origin_path=f"/{commit_id}"),
+                    origin=origins.S3Origin(bucket, origin_path=f"/{commit_id}", origin_access_control=oac),
                     cache_policy=assets_cache_policy,
                 )
             },
             default_root_object="index.html",
+        )
+
+        # Grant CloudFront access to S3 bucket
+        bucket.add_to_resource_policy(
+            iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                principals=[iam.ServicePrincipal("cloudfront.amazonaws.com")],
+                actions=["s3:GetObject"],
+                resources=[bucket.arn_for_objects("*")],
+                conditions={
+                    "StringEquals": {
+                        "AWS:SourceArn": f"arn:aws:cloudfront::{self.account}:distribution/{distribution.distribution_id}"
+                    }
+                }
+            )
         )
 
         # Route53 A records (aliases)
@@ -154,19 +179,11 @@ class BallSortSolverPipeline(cdk.Stack):
 
         bucket_name = "ballsortsolver.click"
 
-        # S3 bucket for webapp hosting
+        # S3 bucket for webapp hosting (private)
         bucket = s3.Bucket(
             self,
             "WebappBucket",
             bucket_name=bucket_name,
-            public_read_access=True,
-            website_index_document="index.html",
-            block_public_access=s3.BlockPublicAccess(
-                block_public_acls=False,
-                block_public_policy=False,
-                ignore_public_acls=False,
-                restrict_public_buckets=False,
-            ),
         )
 
         # Get CodeStar connection ARN from SSM
