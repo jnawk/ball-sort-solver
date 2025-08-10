@@ -143,12 +143,9 @@ class BallSortSolverPipeline(cdk.Stack):
             input=source,
             commands=[
                 "npm install -g aws-cdk",
-                # "pip install -r requirements.txt",  # not required, we are using uv which version locks, etc. and that's how our cdk.json invokes our app.
-                "pushd web",
-                "npm install && npm run build",
-                f"aws s3 sync dist/ s3://{bucket_name}/$CODEBUILD_RESOLVED_SOURCE_VERSION/",
-                "popd",
                 "cdk synth",
+                "cd web && npm install && npm run build",
+                f"aws s3 sync web/dist/ s3://{bucket_name}/$CODEBUILD_RESOLVED_SOURCE_VERSION/",
             ],
         )
 
