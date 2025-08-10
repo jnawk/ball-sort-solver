@@ -181,18 +181,7 @@ class BallSortSolverPipeline(cdk.Stack):
         # no more pipeline modifications after here
         pipeline.build_pipeline()
 
-        # Grant S3 permissions to synth step
-        pipeline.synth_project.add_to_role_policy(
-            iam.PolicyStatement(
-                actions=[
-                    "s3:PutObject",
-                    "s3:PutObjectAcl",
-                    "s3:ListObjectsV2",
-                    "s3:ListBucket",
-                ],
-                resources=[f"{bucket.bucket_arn}/*", bucket.bucket_arn],
-            )
-        )
+        bucket.grant_read_write(pipeline.synth_project.grant_principal)
 
 
 app = cdk.App()
