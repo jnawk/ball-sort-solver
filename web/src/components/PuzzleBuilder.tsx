@@ -13,10 +13,11 @@ export function PuzzleBuilder() {
   const [animationTubes, setAnimationTubes] = useState<Color[][]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
-  const [animationSpeed, setAnimationSpeed] = useState(0.5); // seconds between moves
+  const [movesPerSecond, setMovesPerSecond] = useState(2); // moves per second
   const animationTimer = useRef<NodeJS.Timeout | null>(null);
   const [puzzleJson, setPuzzleJson] = useState('[[],[],[],[]]');
   const [tubeCount, setTubeCount] = useState(4);
+  const [showJson, setShowJson] = useState(false);
 
   // Count colors to validate state
   const colorCounts = useMemo(() => {
@@ -188,7 +189,7 @@ export function PuzzleBuilder() {
 
       animationTimer.current = setTimeout(() => {
         playNextMove(moveIndex + 1, newTubes);
-      }, animationSpeed * 1000);
+      }, 1000 / movesPerSecond);
     };
 
     playNextMove(0, [...tubes]);
@@ -231,7 +232,8 @@ export function PuzzleBuilder() {
     <div className="puzzle-builder">
       <div className="main-layout">
         <div className="puzzle-area">
-          <div className="tubes-container" data-tube-count={tubes.length}>
+          <div className="puzzle-content">
+            <div className="tubes-container" data-tube-count={tubes.length}>
         {(() => {
           const displayTubes = animationTubes.length > 0 ? animationTubes : tubes;
           
@@ -319,39 +321,42 @@ export function PuzzleBuilder() {
             );
           }
         })()}
+            </div>
           </div>
           
-          <div className="puzzle-status">
-            <div className="color-counts-compact">
-              {Object.entries(colorCounts).length > 0 ? (
-                Object.entries(colorCounts).map(([color, count]) => (
-                  <div 
-                    key={color} 
-                    className={`color-square ${count === 4 ? 'valid' : 'invalid'}`}
-                    style={{ backgroundColor: getColorInfo(color as Color).color }}
-                  >
-                    {count}
-                  </div>
-                ))
-              ) : (
-                <div className="color-square placeholder">&nbsp;</div>
-              )}
+          <div className="puzzle-bottom">
+            <div className="puzzle-status">
+              <div className="color-counts-compact">
+                {Object.entries(colorCounts).length > 0 ? (
+                  Object.entries(colorCounts).map(([color, count]) => (
+                    <div 
+                      key={color} 
+                      className={`color-square ${count === 4 ? 'valid' : 'invalid'}`}
+                      style={{ backgroundColor: getColorInfo(color as Color).color }}
+                    >
+                      {count}
+                    </div>
+                  ))
+                ) : (
+                  <div className="color-square placeholder">&nbsp;</div>
+                )}
+              </div>
+              
+              <div className="validation-compact">
+                {isValidState ? (
+                  <span className="valid">✅ Valid</span>
+                ) : (
+                  <span className="invalid">❌ Invalid</span>
+                )}
+              </div>
             </div>
             
-            <div className="validation-compact">
-              {isValidState ? (
-                <span className="valid">✅ Valid</span>
-              ) : (
-                <span className="invalid">❌ Invalid</span>
-              )}
-            </div>
+            <ColorPalette
+              selectedColor={selectedColor}
+              onColorSelect={setSelectedColor}
+              colorCounts={colorCounts}
+            />
           </div>
-          
-          <ColorPalette
-            selectedColor={selectedColor}
-            onColorSelect={setSelectedColor}
-            colorCounts={colorCounts}
-          />
         </div>
         
         <div className="controls-area">
@@ -385,19 +390,6 @@ export function PuzzleBuilder() {
           </div>
 
           <div className="animation-controls">
-            <div className="speed-control">
-              <label>Speed: {animationSpeed.toFixed(1)}s</label>
-              <input
-                type="range"
-                min="0.1"
-                max="1.0"
-                step="0.1"
-                value={animationSpeed}
-                onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
-                className="speed-slider"
-              />
-            </div>
-            
             <div className="play-controls">
               <button 
                 onClick={playAnimation} 
@@ -424,13 +416,26 @@ export function PuzzleBuilder() {
               </button>
             </div>
           </div>
+          
+          <div className="speed-control">
+            <label>Animation Speed: {movesPerSecond} moves/sec</label>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              step="1"
+              value={movesPerSecond}
+              onChange={(e) => setMovesPerSecond(parseInt(e.target.value))}
+              className="speed-slider"
+            />
+          </div>
         </div>
 
         {solveResult && (
           <div className="solve-result">
             {solveResult.moves && (
               <div className="moves">
-                <h4>Moves (1-based):</h4>
+                <h4>Moves:</h4>
                 <div className="moves-list">
                   {toOneBased(solveResult.moves).map((move, index) => (
                     <span
@@ -457,19 +462,27 @@ export function PuzzleBuilder() {
           </div>
         )}
 
-        <div className="puzzle-json">
-          <h4>Puzzle State (JSON):</h4>
-          <textarea
-            value={puzzleJson}
-            onChange={(e) => setPuzzleJson(e.target.value)}
-            rows={4}
-            cols={50}
-            className="json-textarea"
-          />
-          <button onClick={loadFromJson} className="load-button">
-            Load from JSON
-          </button>
-        </div>
+        <button 
+          onClick={() => setShowJson(!showJson)} 
+          className="json-toggle"
+        >
+          {showJson ? '▼' : '▶'} JSON
+        </button>
+        
+        {showJson && (
+          <div className="puzzle-json">
+            <textarea
+              value={puzzleJson}
+              onChange={(e) => setPuzzleJson(e.target.value)}
+              rows={4}
+              cols={50}
+              className="json-textarea"
+            />
+            <button onClick={loadFromJson} className="load-button">
+              Load from JSON
+            </button>
+          </div>
+        )}
           </div>
         </div>
       </div>

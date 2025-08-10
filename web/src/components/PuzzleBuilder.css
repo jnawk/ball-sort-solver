@@ -16,10 +16,25 @@
 }
 
 .puzzle-area {
-  flex: 1;
+  flex: 2;
   min-width: 0;
   position: sticky;
   top: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.puzzle-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.puzzle-bottom {
+  flex-shrink: 0;
 }
 
 .controls-area {
@@ -387,6 +402,21 @@
 
 .load-button:hover {
   background: #138496;
+}
+
+.json-toggle {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.json-toggle:hover {
+  background: #5a6268;
 }
 
 .tube-count-control {
