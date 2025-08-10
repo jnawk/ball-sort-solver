@@ -148,9 +148,12 @@ class BallSortSolverPipeline(cdk.Stack):
                 "npm install -g aws-cdk",
                 "cdk synth",
                 "cd web && npm install && npm run build",
-                f"aws s3 sync web/dist/ s3://{bucket_name}/$CODEBUILD_RESOLVED_SOURCE_VERSION/",
+                f"aws s3 sync dist/ s3://{bucket_name}/$CODEBUILD_RESOLVED_SOURCE_VERSION/",
             ],
-            env={"PYTHON_VERSION": "3.12"},
+            env={
+                "PYTHON_VERSION": "3.12",
+                "NODE_VERSION": "20"
+            },
         )
 
         pipeline = pipelines.CodePipeline(
