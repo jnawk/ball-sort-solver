@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Color, State, fromTopDown, solve, toOneBased, SolveResult } from '../solver';
 import { ColorPalette } from './ColorPalette';
 import { Tube } from './Tube';
-import { COLOR_MAP } from '../types';
+import { COLOR_MAP, getColorInfo } from '../types';
 import './PuzzleBuilder.css';
 
 export function PuzzleBuilder() {
@@ -145,14 +145,18 @@ export function PuzzleBuilder() {
       console.log('UI tubes (top-down):', tubes);
       const initialState = fromTopDown(tubes);
       console.log('Solver state (bottom-up):', initialState.toList());
-      const result = solve(initialState);
-      setSolveResult(result);
-      // Initialize animation with original state
-      setAnimationTubes([...tubes]);
-      setCurrentMoveIndex(0);
+      
+      // Use setTimeout to allow UI to update before starting solve
+      setTimeout(() => {
+        const result = solve(initialState);
+        setSolveResult(result);
+        // Initialize animation with original state
+        setAnimationTubes([...tubes]);
+        setCurrentMoveIndex(0);
+        setIsLoading(false);
+      }, 10);
     } catch (error) {
       console.error('Solver error:', error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -214,12 +218,6 @@ export function PuzzleBuilder() {
 
   return (
     <div className="puzzle-builder">
-      <ColorPalette
-        selectedColor={selectedColor}
-        onColorSelect={setSelectedColor}
-        colorCounts={colorCounts}
-      />
-      
       <div className="main-layout">
         <div className="puzzle-area">
           <div className="tubes-container" data-tube-count={tubes.length}>
@@ -311,28 +309,42 @@ export function PuzzleBuilder() {
           }
         })()}
           </div>
+          
+          <div className="puzzle-status">
+            <div className="color-counts-compact">
+              {Object.entries(colorCounts).length > 0 ? (
+                Object.entries(colorCounts).map(([color, count]) => (
+                  <div 
+                    key={color} 
+                    className={`color-square ${count === 4 ? 'valid' : 'invalid'}`}
+                    style={{ backgroundColor: getColorInfo(color as Color).color }}
+                  >
+                    {count}
+                  </div>
+                ))
+              ) : (
+                <div className="color-square placeholder">&nbsp;</div>
+              )}
+            </div>
+            
+            <div className="validation-compact">
+              {isValidState ? (
+                <span className="valid">✅ Valid</span>
+              ) : (
+                <span className="invalid">❌ Invalid</span>
+              )}
+            </div>
+          </div>
+          
+          <ColorPalette
+            selectedColor={selectedColor}
+            onColorSelect={setSelectedColor}
+            colorCounts={colorCounts}
+          />
         </div>
         
         <div className="controls-area">
           <div className="status">
-        <h3>Color Counts:</h3>
-        {Object.entries(colorCounts).length > 0 ? (
-          Object.entries(colorCounts).map(([color, count]) => (
-            <span key={color} className={`color-count ${count === 4 ? 'valid' : 'invalid'}`}>
-              {color}: {count}/4
-            </span>
-          ))
-        ) : (
-          <span className="color-count placeholder">&nbsp;</span>
-        )}
-
-        <div className="validation">
-          {isValidState ? (
-            <span className="valid">✅ Valid puzzle state!</span>
-          ) : (
-            <span className="invalid">❌ Need exactly 4 of each color & tubes must be full or empty</span>
-          )}
-        </div>
 
         <div className="tube-count-control">
           <label>Number of tubes: {tubeCount}</label>

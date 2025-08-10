@@ -93,6 +93,56 @@
   border: none;
 }
 
+.puzzle-status {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.color-counts-compact {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.color-square {
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-shadow: 
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
+}
+
+.color-square.valid {
+  border: 2px solid #28a745;
+}
+
+.color-square.invalid {
+  border: 2px solid #dc3545;
+}
+
+.color-square.placeholder {
+  background: transparent;
+  color: transparent;
+  border: 2px solid transparent;
+}
+
+.validation-compact {
+  font-size: 12px;
+  font-weight: bold;
+}
+
 .validation {
   margin: 15px 0;
   font-size: 16px;
@@ -162,14 +212,21 @@
 }
 
 .solve-button.solving {
-  background: #ffc107;
-  color: #000;
+  background: #ffc107 !important;
+  color: #000 !important;
   animation: pulse 1s infinite;
+  border-color: #ffc107 !important;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
 }
 
 .solve-result {
@@ -186,6 +243,10 @@
 }
 
 .solve-result p {
+  color: #155724;
+}
+
+.moves h4 {
   color: #155724;
 }
 
