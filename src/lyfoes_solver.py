@@ -1,6 +1,8 @@
 import collections
 import dataclasses
 import json
+import resource
+import time
 import typing
 
 Color = typing.Literal[
@@ -120,6 +122,10 @@ def solve(
     if initial_state.solved:
         return initial_state, []
 
+    # Memory tracking
+    start_memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024  # MB on Linux
+    start_time = time.time()
+
     queue = collections.deque([(initial_state, [])])
     visited = {initial_state.canonical_key()}
     processed = 0
@@ -129,8 +135,11 @@ def solve(
         processed += 1
 
         if processed % 10000 == 0:
+            current_memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024  # MB
+            elapsed = time.time() - start_time
             print(
-                f"Processed {processed} states, queue size: {len(queue)}, visited: {len(visited)}"
+                f"Processed {processed} states, queue: {len(queue)}, visited: {len(visited)}, "
+                f"memory: {current_memory:.1f}MB, elapsed: {elapsed:.1f}s"
             )
 
         for move in state.moves:
@@ -144,6 +153,13 @@ def solve(
             new_path = path + [move]
 
             if new_state.solved:
+                final_memory = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+                total_time = time.time() - start_time
+                print(f"\nSolution found!")
+                print(f"Total time: {total_time:.2f}s")
+                print(f"Peak memory: {final_memory:.1f}MB")
+                print(f"States processed: {processed}")
+                print(f"Solution length: {len(new_path)} moves")
                 return new_state, new_path
 
             queue.append((new_state, new_path))
