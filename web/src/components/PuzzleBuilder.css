@@ -11,17 +11,22 @@
 .main-layout {
   display: flex;
   gap: 40px;
+  height: 100vh;
   align-items: flex-start;
 }
 
 .puzzle-area {
   flex: 1;
   min-width: 0;
+  position: sticky;
+  top: 0;
 }
 
 .controls-area {
   flex: 1;
   min-width: 300px;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 @media (max-width: 768px) {
@@ -154,6 +159,17 @@
 .solve-button:disabled {
   background: #6c757d;
   cursor: not-allowed;
+}
+
+.solve-button.solving {
+  background: #ffc107;
+  color: #000;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 .solve-result {

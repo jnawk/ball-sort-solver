@@ -355,53 +355,53 @@ export function PuzzleBuilder() {
             <button
               onClick={handleSolve}
               disabled={!isValidState || isLoading}
-              className="solve-button"
+              className={`solve-button ${isLoading ? 'solving' : ''}`}
             >
-              {isLoading ? 'Solving...' : 'Solve Puzzle'}
+              {isLoading ? '🔄 Solving...' : 'Solve Puzzle'}
             </button>
           </div>
 
-          {solveResult?.moves && (
-            <div className="animation-controls">
-              <div className="speed-control">
-                <label>Speed: {animationSpeed.toFixed(1)}s</label>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1.0"
-                  step="0.1"
-                  value={animationSpeed}
-                  onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
-                  className="speed-slider"
-                />
-              </div>
-              
-              <div className="play-controls">
-                <button 
-                  onClick={playAnimation} 
-                  disabled={isPlaying}
-                  className="play-button"
-                >
-                  ▶️ Play
-                </button>
-                
-                <button 
-                  onClick={stopAnimation} 
-                  disabled={!isPlaying}
-                  className="stop-button"
-                >
-                  ⏹️ Stop
-                </button>
-                
-                <button 
-                  onClick={resetAnimation}
-                  className="reset-button"
-                >
-                  🔄 Reset
-                </button>
-              </div>
+          <div className="animation-controls">
+            <div className="speed-control">
+              <label>Speed: {animationSpeed.toFixed(1)}s</label>
+              <input
+                type="range"
+                min="0.1"
+                max="1.0"
+                step="0.1"
+                value={animationSpeed}
+                onChange={(e) => setAnimationSpeed(parseFloat(e.target.value))}
+                className="speed-slider"
+                disabled={!solveResult?.moves}
+              />
             </div>
-          )}
+            
+            <div className="play-controls">
+              <button 
+                onClick={playAnimation} 
+                disabled={isPlaying || !solveResult?.moves}
+                className="play-button"
+              >
+                ▶️ Play
+              </button>
+              
+              <button 
+                onClick={stopAnimation} 
+                disabled={!isPlaying || !solveResult?.moves}
+                className="stop-button"
+              >
+                ⏹️ Stop
+              </button>
+              
+              <button 
+                onClick={resetAnimation}
+                disabled={!solveResult?.moves}
+                className="reset-button"
+              >
+                🔄 Reset
+              </button>
+            </div>
+          </div>
         </div>
 
         {solveResult && (
