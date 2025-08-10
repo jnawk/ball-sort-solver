@@ -284,6 +284,7 @@
 .puzzle-json h4 {
   margin-top: 0;
   margin-bottom: 10px;
+  color: #333;
 }
 
 .json-textarea {
@@ -320,8 +321,21 @@
   margin-bottom: 5px;
   font-size: 14px;
   font-weight: bold;
+  color: #333;
 }
 
 .tube-count-slider {
   width: 200px;
+}
+
+.speed-control label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.speed-slider {
+  width: 150px;
 }

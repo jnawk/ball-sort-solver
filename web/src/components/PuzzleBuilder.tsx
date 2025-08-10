@@ -120,6 +120,7 @@ export function PuzzleBuilder() {
       const parsed = JSON.parse(puzzleJson);
       if (Array.isArray(parsed) && parsed.every(tube => Array.isArray(tube))) {
         setTubes(parsed);
+        setTubeCount(parsed.length);
         setSolveResult(null);
         setAnimationTubes([]);
         setIsPlaying(false);
