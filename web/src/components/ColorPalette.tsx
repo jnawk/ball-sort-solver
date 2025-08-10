@@ -10,7 +10,6 @@ interface ColorPaletteProps {
 export function ColorPalette({ selectedColor, onColorSelect }: ColorPaletteProps) {
   return (
     <div className="color-palette">
-      <h3>Color Palette</h3>
       <div className="palette-grid">
         {COLOR_MAP.map((colorInfo) => (
           <button

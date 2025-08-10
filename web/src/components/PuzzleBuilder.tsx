@@ -114,50 +114,50 @@ export function PuzzleBuilder() {
 
   const playAnimation = () => {
     if (!solveResult?.moves) return;
-    
+
     setIsPlaying(true);
     setCurrentMoveIndex(0);
     setAnimationTubes([...tubes]);
-    
+
     const playNextMove = (moveIndex: number, currentTubes: Color[][]) => {
       if (moveIndex >= solveResult.moves!.length) {
         setIsPlaying(false);
         return;
       }
-      
+
       const move = solveResult.moves![moveIndex];
       const newTubes = [...currentTubes];
-      
+
       // Apply the move
       // UI tubes are top-down, solver moves are for bottom-up
       // So we need to remove from the end (bottom) and add to end (bottom) of UI tubes
       const ball = newTubes[move.fromTubeNumber].pop()!;
       newTubes[move.toTubeNumber].push(ball);
-      
+
       setAnimationTubes([...newTubes]);
       setCurrentMoveIndex(moveIndex + 1);
-      
+
       animationTimer.current = setTimeout(() => {
         playNextMove(moveIndex + 1, newTubes);
       }, animationSpeed * 1000);
     };
-    
+
     playNextMove(0, [...tubes]);
   };
-  
+
   const stopAnimation = () => {
     setIsPlaying(false);
     if (animationTimer.current) {
       clearTimeout(animationTimer.current);
     }
   };
-  
+
   const resetAnimation = () => {
     stopAnimation();
     setAnimationTubes([...tubes]);
     setCurrentMoveIndex(0);
   };
-  
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -169,8 +169,6 @@ export function PuzzleBuilder() {
 
   return (
     <div className="puzzle-builder">
-      <h2>Build Your Puzzle</h2>
-
       <ColorPalette
         selectedColor={selectedColor}
         onColorSelect={setSelectedColor}
@@ -272,15 +270,15 @@ export function PuzzleBuilder() {
                 <h4>Moves (1-based):</h4>
                 <div className="moves-list">
                   {toOneBased(solveResult.moves).map((move, index) => (
-                    <span 
-                      key={index} 
+                    <span
+                      key={index}
                       className={`move ${index < currentMoveIndex ? 'completed' : ''} ${index === currentMoveIndex ? 'current' : ''}`}
                     >
                       {move.fromTubeNumber} → {move.toTubeNumber}
                     </span>
                   ))}
                 </div>
-                
+
                 <div className="animation-controls">
                   <div className="speed-control">
                     <label>Animation Speed: {animationSpeed.toFixed(1)}s</label>
@@ -294,32 +292,32 @@ export function PuzzleBuilder() {
                       className="speed-slider"
                     />
                   </div>
-                  
+
                   <div className="play-controls">
-                    <button 
-                      onClick={playAnimation} 
+                    <button
+                      onClick={playAnimation}
                       disabled={isPlaying}
                       className="play-button"
                     >
                       ▶️ Play
                     </button>
-                    
-                    <button 
-                      onClick={stopAnimation} 
+
+                    <button
+                      onClick={stopAnimation}
                       disabled={!isPlaying}
                       className="stop-button"
                     >
                       ⏹️ Stop
                     </button>
-                    
-                    <button 
+
+                    <button
                       onClick={resetAnimation}
                       className="reset-button"
                     >
                       🔄 Reset
                     </button>
                   </div>
-                  
+
                   <div className="progress">
                     Move {currentMoveIndex} of {solveResult.moves.length}
                   </div>
