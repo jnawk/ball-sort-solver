@@ -14,6 +14,7 @@ export function PuzzleBuilder() {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(0);
   const [animationSpeed, setAnimationSpeed] = useState(0.5); // seconds between moves
   const animationTimer = useRef<NodeJS.Timeout | null>(null);
+  const [puzzleJson, setPuzzleJson] = useState('[[],[]]');
 
   // Count colors to validate state
   const colorCounts = useMemo(() => {
@@ -51,18 +52,40 @@ export function PuzzleBuilder() {
         newTubes.push([]);
       }
 
+      // Update JSON representation
+      setPuzzleJson(JSON.stringify(newTubes));
+
       return newTubes;
     });
   };
 
   const clearAll = () => {
     setTubes([[], []]);
+    setPuzzleJson('[[],[]]');
     setSolveResult(null);
     setAnimationTubes([]);
     setIsPlaying(false);
     setCurrentMoveIndex(0);
     if (animationTimer.current) {
       clearTimeout(animationTimer.current);
+    }
+  };
+
+  const loadFromJson = () => {
+    try {
+      const parsed = JSON.parse(puzzleJson);
+      if (Array.isArray(parsed) && parsed.every(tube => Array.isArray(tube))) {
+        setTubes(parsed);
+        setSolveResult(null);
+        setAnimationTubes([]);
+        setIsPlaying(false);
+        setCurrentMoveIndex(0);
+        if (animationTimer.current) {
+          clearTimeout(animationTimer.current);
+        }
+      }
+    } catch (e) {
+      alert('Invalid JSON format');
     }
   };
 
@@ -74,7 +97,9 @@ export function PuzzleBuilder() {
 
     try {
       // Convert tubes to bottom-up format for solver
+      console.log('UI tubes (top-down):', tubes);
       const initialState = fromTopDown(tubes);
+      console.log('Solver state (bottom-up):', initialState.toList());
       const result = solve(initialState);
       setSolveResult(result);
       // Initialize animation with original state
@@ -104,6 +129,8 @@ export function PuzzleBuilder() {
       const newTubes = [...currentTubes];
       
       // Apply the move
+      // UI tubes are top-down, solver moves are for bottom-up
+      // So we need to remove from the end (bottom) and add to end (bottom) of UI tubes
       const ball = newTubes[move.fromTubeNumber].pop()!;
       newTubes[move.toTubeNumber].push(ball);
       
@@ -203,6 +230,20 @@ export function PuzzleBuilder() {
           ) : (
             <span className="invalid">❌ Need exactly 4 of each color & tubes must be full or empty</span>
           )}
+        </div>
+
+        <div className="puzzle-json">
+          <h4>Puzzle State (JSON):</h4>
+          <textarea
+            value={puzzleJson}
+            onChange={(e) => setPuzzleJson(e.target.value)}
+            rows={4}
+            cols={50}
+            className="json-textarea"
+          />
+          <button onClick={loadFromJson} className="load-button">
+            Load from JSON
+          </button>
         </div>
 
         <div className="buttons">

@@ -213,3 +213,40 @@
   font-size: 12px;
   overflow-x: auto;
 }
+
+.puzzle-json {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.puzzle-json h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.json-textarea {
+  width: 100%;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+
+.load-button {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.load-button:hover {
+  background: #138496;
+}

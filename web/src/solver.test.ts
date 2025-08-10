@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { State, Move, fromTopDown, solve, toOneBased } from './solver';
+import { describe, it, expect } from "vitest";
+import { State, Move, fromTopDown, solve, toOneBased } from "./solver";
 
-describe('Lyfoes Solver', () => {
-  it('should detect equivalent states', () => {
+describe("Lyfoes Solver", () => {
+  it("should detect equivalent states", () => {
     const state1 = new State([
       ["DB", "Ye", "DB", "DB"],
       ["BG", "Ye", "BG", "Re"],
@@ -35,7 +35,7 @@ describe('Lyfoes Solver', () => {
     expect(state1.equivalentTo(state3)).toBe(false);
   });
 
-  it('should detect solved state', () => {
+  it("should detect solved state", () => {
     const solvedState = new State([
       ["DB", "DB", "DB", "DB"],
       ["BG", "BG", "BG", "BG"],
@@ -58,7 +58,7 @@ describe('Lyfoes Solver', () => {
     expect(unsolvedState.solved).toBe(false);
   });
 
-  it('should generate valid moves', () => {
+  it("should generate valid moves", () => {
     const state = new State([
       ["BG", "Ye", "BG", "Re"],
       ["Re", "Re", "BG", "DB"],
@@ -74,12 +74,15 @@ describe('Lyfoes Solver', () => {
     // Should be able to move from each filled tube to each empty tube
     for (let fromNumber = 0; fromNumber < 4; fromNumber++) {
       for (let toNumber = 4; toNumber < 6; toNumber++) {
-        expect(moves).toContainEqual({ fromTubeNumber: fromNumber, toTubeNumber: toNumber });
+        expect(moves).toContainEqual({
+          fromTubeNumber: fromNumber,
+          toTubeNumber: toNumber,
+        });
       }
     }
   });
 
-  it('should validate colors', () => {
+  it("should validate colors", () => {
     expect(() => {
       new State([
         ["BG", "Ye", "BG", "Re"],
@@ -89,10 +92,10 @@ describe('Lyfoes Solver', () => {
         [],
         [],
       ]);
-    }).toThrow('Invalid color: XX');
+    }).toThrow("Invalid color: XX");
   });
 
-  it('should solve a simple puzzle', () => {
+  it("should solve a simple puzzle", () => {
     const initialState = fromTopDown([
       ["Re", "DB", "BG", "DB"],
       ["Ma", "DB", "BG", "Ye"],
@@ -111,16 +114,56 @@ describe('Lyfoes Solver', () => {
     expect(result.stats.solutionLength).toBeGreaterThan(0);
     expect(result.stats.totalTime).toBeGreaterThan(0);
 
-    console.log(`Solution found in ${result.stats.totalTime.toFixed(2)}s with ${result.stats.solutionLength} moves`);
-    console.log('Final state:', result.finalState.toList());
+    console.log(
+      `Solution found in ${result.stats.totalTime.toFixed(2)}s with ${
+        result.stats.solutionLength
+      } moves`
+    );
+    console.log("Final state:", result.finalState.toList());
 
     if (result.moves) {
       const oneBasedMoves = toOneBased(result.moves);
-      console.log('Moves (1-based):', oneBasedMoves.map(m => [m.fromTubeNumber, m.toTubeNumber]));
+      console.log(
+        "Moves (1-based):",
+        oneBasedMoves.map((m) => [m.fromTubeNumber, m.toTubeNumber])
+      );
     }
   });
 
-  it('should solve level 5 puzzle', () => {
+  it("should solve level 4 puzzle", () => {
+    const initialState = fromTopDown([
+      ["Re", "Pu", "Pi", "Ma"],
+      ["LB", "Or", "Re", "Gr"],
+      ["Ye", "DB", "Pu", "Wh"],
+      ["Cy", "Pi", "LG", "Ye"],
+      ["BG", "Ma", "Ma", "Gr"],
+      ["Pi", "DB", "Gr", "Ye"],
+      ["Or", "LG", "Or", "Pu"],
+      ["BG", "Re", "Cy", "BG"],
+      ["Or", "LG", "Pi", "LB"],
+      ["Cy", "LG", "Ma", "Wh"],
+      ["Wh", "LB", "BG", "Re"],
+      ["Cy", "Wh", "Ye", "Gr"],
+      ["DB", "LB", "DB", "Pu"],
+      [],
+      [],
+    ]);
+
+    const result = solve(initialState);
+
+    expect(result.moves).not.toBeNull();
+    expect(result.finalState.solved).toBe(true);
+    expect(result.stats.solutionLength).toBeGreaterThan(0);
+
+    console.log(
+      `Level 4 puzzle solved in ${result.stats.totalTime.toFixed(2)}s with ${
+        result.stats.solutionLength
+      } moves`
+    );
+    console.log(JSON.stringify(result.finalState.toList(), null, 2));
+  });
+
+  it("should solve level 5 puzzle", () => {
     const initialState = fromTopDown([
       ["Or", "BG", "Re", "Cy"],
       ["DB", "BG", "LG", "Or"],
@@ -145,7 +188,11 @@ describe('Lyfoes Solver', () => {
     expect(result.finalState.solved).toBe(true);
     expect(result.stats.solutionLength).toBeGreaterThan(0);
 
-    console.log(`Level 5 puzzle solved in ${result.stats.totalTime.toFixed(2)}s with ${result.stats.solutionLength} moves`);
+    console.log(
+      `Level 5 puzzle solved in ${result.stats.totalTime.toFixed(2)}s with ${
+        result.stats.solutionLength
+      } moves`
+    );
     console.log(JSON.stringify(result.finalState.toList(), null, 2));
   });
 });

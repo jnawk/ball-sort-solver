@@ -112,7 +112,7 @@ export class State {
 }
 
 export function fromTopDown(tubes: Color[][]): State {
-  return new State(tubes.map(tube => [...tube].reverse()));
+  return new State(tubes.map(tube => [...tube]));
 }
 
 export function toOneBased(moves: Move[]): Move[] {
