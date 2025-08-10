@@ -144,7 +144,7 @@ class BallSortSolverPipeline(cdk.Stack):
             input=source,
             commands=[
                 "curl -LsSf https://astral.sh/uv/install.sh | sh",
-                "source $HOME/.cargo/env",
+                "export PATH=$HOME/.cargo/bin:$PATH",
                 "npm install -g aws-cdk",
                 "cdk synth",
                 "cd web && npm install && npm run build",
