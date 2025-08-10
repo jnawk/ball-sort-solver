@@ -5,11 +5,68 @@
 }
 
 .tubes-container {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   justify-content: center;
+  gap: 10px;
   margin: 20px 0;
   min-height: 200px;
+}
+
+/* Tube layout based on count */
+.tubes-container[data-tube-count="1"] { grid-template-columns: repeat(1, 1fr); }
+.tubes-container[data-tube-count="2"] { grid-template-columns: repeat(2, 1fr); }
+.tubes-container[data-tube-count="3"] { grid-template-columns: repeat(3, 1fr); }
+.tubes-container[data-tube-count="4"] { grid-template-columns: repeat(4, 1fr); }
+.tubes-container[data-tube-count="5"] { grid-template-columns: repeat(5, 1fr); }
+
+.tubes-container[data-tube-count="6"] {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="7"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="8"] {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="9"] {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="10"] {
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="11"] {
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="12"] {
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="13"] {
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="14"] {
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.tubes-container[data-tube-count="15"] {
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(2, 1fr);
 }
 
 .status {
@@ -51,6 +108,12 @@
   color: #dc3545;
 }
 
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .clear-button {
   background: #dc3545;
   color: white;
@@ -63,4 +126,137 @@
 
 .clear-button:hover {
   background: #c82333;
+}
+
+.solve-button {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.solve-button:hover:not(:disabled) {
+  background: #218838;
+}
+
+.solve-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.solve-result {
+  margin-top: 20px;
+  padding: 15px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 8px;
+}
+
+.solve-result h3 {
+  color: #155724;
+  margin-top: 0;
+}
+
+.moves-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 10px 0;
+}
+
+.move {
+  background: #007bff;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  transition: all 0.3s;
+}
+
+.move.completed {
+  background: #28a745;
+}
+
+.move.current {
+  background: #ffc107;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.animation-controls {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.speed-control {
+  margin-bottom: 10px;
+}
+
+.speed-control label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.speed-slider {
+  width: 200px;
+}
+
+.play-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.play-button, .stop-button, .reset-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.play-button {
+  background: #28a745;
+  color: white;
+}
+
+.play-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.stop-button {
+  background: #dc3545;
+  color: white;
+}
+
+.stop-button:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.reset-button {
+  background: #6c757d;
+  color: white;
+}
+
+.progress {
+  font-size: 14px;
+  font-weight: bold;
+  color: #495057;
+}
+
+.final-state pre {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-x: auto;
 }
