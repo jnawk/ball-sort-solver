@@ -218,8 +218,10 @@ export function PuzzleBuilder() {
         onColorSelect={setSelectedColor}
         colorCounts={colorCounts}
       />
-
-      <div className="tubes-container" data-tube-count={tubes.length}>
+      
+      <div className="main-layout">
+        <div className="puzzle-area">
+          <div className="tubes-container" data-tube-count={tubes.length}>
         {(() => {
           const displayTubes = animationTubes.length > 0 ? animationTubes : tubes;
           
@@ -307,9 +309,11 @@ export function PuzzleBuilder() {
             );
           }
         })()}
-      </div>
-
-      <div className="status">
+          </div>
+        </div>
+        
+        <div className="controls-area">
+          <div className="status">
         <h3>Color Counts:</h3>
         {Object.entries(colorCounts).length > 0 ? (
           Object.entries(colorCounts).map(([color, count]) => (
@@ -342,20 +346,22 @@ export function PuzzleBuilder() {
         </div>
 
         <div className="buttons">
-          <button onClick={clearAll} className="clear-button">
-            Clear All
-          </button>
+          <div className="main-buttons">
+            <button onClick={clearAll} className="clear-button">
+              Clear All
+            </button>
 
-          <button
-            onClick={handleSolve}
-            disabled={!isValidState || isLoading}
-            className="solve-button"
-          >
-            {isLoading ? 'Solving...' : 'Solve Puzzle'}
-          </button>
+            <button
+              onClick={handleSolve}
+              disabled={!isValidState || isLoading}
+              className="solve-button"
+            >
+              {isLoading ? 'Solving...' : 'Solve Puzzle'}
+            </button>
+          </div>
 
           {solveResult?.moves && (
-            <>
+            <div className="animation-controls">
               <div className="speed-control">
                 <label>Speed: {animationSpeed.toFixed(1)}s</label>
                 <input
@@ -369,29 +375,31 @@ export function PuzzleBuilder() {
                 />
               </div>
               
-              <button 
-                onClick={playAnimation} 
-                disabled={isPlaying}
-                className="play-button"
-              >
-                ▶️ Play
-              </button>
-              
-              <button 
-                onClick={stopAnimation} 
-                disabled={!isPlaying}
-                className="stop-button"
-              >
-                ⏹️ Stop
-              </button>
-              
-              <button 
-                onClick={resetAnimation}
-                className="reset-button"
-              >
-                🔄 Reset
-              </button>
-            </>
+              <div className="play-controls">
+                <button 
+                  onClick={playAnimation} 
+                  disabled={isPlaying}
+                  className="play-button"
+                >
+                  ▶️ Play
+                </button>
+                
+                <button 
+                  onClick={stopAnimation} 
+                  disabled={!isPlaying}
+                  className="stop-button"
+                >
+                  ⏹️ Stop
+                </button>
+                
+                <button 
+                  onClick={resetAnimation}
+                  className="reset-button"
+                >
+                  🔄 Reset
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -438,6 +446,8 @@ export function PuzzleBuilder() {
           <button onClick={loadFromJson} className="load-button">
             Load from JSON
           </button>
+        </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,38 @@
+#root, .App, .puzzle-builder {
+  padding: 0;
+  margin: 0;
+}
+
 .puzzle-builder {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+}
+
+.main-layout {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.puzzle-area {
+  flex: 1;
+  min-width: 0;
+}
+
+.controls-area {
+  flex: 1;
+  min-width: 300px;
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .controls-area {
+    min-width: 0;
+  }
 }
 
 .tubes-container {
@@ -72,9 +103,24 @@
 }
 
 .buttons {
+  margin-top: 10px;
+}
+
+.main-buttons {
   display: flex;
   gap: 10px;
-  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.animation-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.play-controls {
+  display: flex;
+  gap: 10px;
 }
 
 .clear-button {
