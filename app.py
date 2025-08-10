@@ -131,7 +131,7 @@ class BallSortSolverPipeline(cdk.Stack):
 
         # Get CodeStar connection ARN from SSM
         connection_arn = ssm.StringParameter.from_string_parameter_name(
-            self, "ConnectionArn", "/github_jnawk/arn/github_jnawk/arn"
+            self, "ConnectionArn", "/github_jnawk/arn"
         ).string_value
 
         source = pipelines.CodePipelineSource.connection(
