@@ -19,7 +19,7 @@ import os
 
 class CertificateStack(cdk.Stack):
     def __init__(self, scope: constructs.Construct, construct_id: str, **kwargs):
-        super().__init__(scope, construct_id,  **kwargs)
+        super().__init__(scope, construct_id, **kwargs)
 
         zone = route53.HostedZone.from_lookup(
             self, "HostedZone", domain_name="ballsortsolver.click"
@@ -30,14 +30,14 @@ class CertificateStack(cdk.Stack):
             "Certificate",
             domain_name="ballsortsolver.click",
             subject_alternative_names=["www.ballsortsolver.click"],
-            validation=acm.CertificateValidation.from_dns(zone)
+            validation=acm.CertificateValidation.from_dns(zone),
         )
 
         ssm.StringParameter(
             self,
             "CertificateArnParameter",
             parameter_name="/ballsortsolver/certificate-arn",
-            string_value=certificate.certificate_arn
+            string_value=certificate.certificate_arn,
         )
 
 
@@ -50,7 +50,7 @@ class BallSortDeployment(cdk.Stack):
         bucket_name: str,
         **kwargs,
     ) -> None:
-        super().__init__(scope, construct_id,  **kwargs)
+        super().__init__(scope, construct_id, **kwargs)
 
         bucket = s3.Bucket.from_bucket_name(self, "WebappBucket", bucket_name)
         commit_id = os.environ.get("CODEBUILD_RESOLVED_SOURCE_VERSION", "main")
@@ -69,18 +69,22 @@ class BallSortDeployment(cdk.Stack):
                 service="SSM",
                 region="us-east-1",
                 parameters={"Name": "/ballsortsolver/certificate-arn"},
-                physical_resource_id=custom_resources.PhysicalResourceId.of("/ballsortsolver/certificate-arn")
+                physical_resource_id=custom_resources.PhysicalResourceId.of(
+                    "/ballsortsolver/certificate-arn"
+                ),
             ),
             install_latest_aws_sdk=False,
             policy=custom_resources.AwsCustomResourcePolicy.from_sdk_calls(
                 resources=[
                     f"arn:{cdk.Aws.PARTITION}:ssm:us-east-1:{cdk.Aws.ACCOUNT_ID}:parameter/ballsortsolver/certificate-arn"
                 ]
-            )
+            ),
         )
 
         certificate = acm.Certificate.from_certificate_arn(
-            self, "Certificate", certificate_arn_lookup.get_response_field("Parameter.Value")
+            self,
+            "Certificate",
+            certificate_arn_lookup.get_response_field("Parameter.Value"),
         )
 
         # Cache policy for assets (cache indefinitely)
@@ -99,16 +103,6 @@ class BallSortDeployment(cdk.Stack):
             max_ttl=cdk.Duration.seconds(0),
         )
 
-        # Origin Access Control for secure S3 access
-        oac = cloudfront.OriginAccessControl(
-            self,
-            "OAC",
-            description="OAC for webapp bucket",
-            origin_access_control_origin_type=cloudfront.OriginAccessControlOriginType.S3,
-            signing_behavior=cloudfront.OriginAccessControlSigningBehavior.ALWAYS,
-            signing_protocol=cloudfront.OriginAccessControlSigningProtocol.SIGV4,
-        )
-
         # CloudFront distribution with OAC
         distribution = cloudfront.Distribution(
             self,
@@ -116,33 +110,63 @@ class BallSortDeployment(cdk.Stack):
             domain_names=["ballsortsolver.click", "www.ballsortsolver.click"],
             certificate=certificate,
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(bucket, origin_path=f"/{commit_id}", origin_access_control=oac),
+                origin=origins.S3BucketOrigin.with_origin_access_control(
+                    bucket, origin_path=f"/{commit_id}"
+                ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=no_cache_policy,
             ),
             additional_behaviors={
                 "assets/*": cloudfront.BehaviorOptions(
-                    origin=origins.S3Origin(bucket, origin_path=f"/{commit_id}", origin_access_control=oac),
+                    origin=origins.S3BucketOrigin.with_origin_access_control(
+                        bucket, origin_path=f"/{commit_id}"
+                    ),
                     cache_policy=assets_cache_policy,
                 )
             },
             default_root_object="index.html",
         )
 
-        # Grant CloudFront access to S3 bucket
-        bucket.add_to_resource_policy(
-            iam.PolicyStatement(
-                effect=iam.Effect.ALLOW,
-                principals=[iam.ServicePrincipal("cloudfront.amazonaws.com")],
-                actions=["s3:GetObject"],
-                resources=[bucket.arn_for_objects("*")],
-                conditions={
-                    "StringEquals": {
-                        "AWS:SourceArn": f"arn:aws:cloudfront::{self.account}:distribution/{distribution.distribution_id}"
-                    }
-                }
-            )
+        # Manual bucket policy for imported bucket with OAC
+        bucket_policy = custom_resources.AwsCustomResource(
+            self,
+            "BucketPolicyUpdate",
+            on_create=custom_resources.AwsSdkCall(
+                action="putBucketPolicy",
+                service="S3",
+                parameters={
+                    "Bucket": bucket_name,
+                    "Policy": cdk.Fn.to_json_string(
+                        {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Principal": {
+                                        "Service": "cloudfront.amazonaws.com"
+                                    },
+                                    "Action": "s3:GetObject",
+                                    "Resource": f"arn:aws:s3:::{bucket_name}/*",
+                                    "Condition": {
+                                        "StringEquals": {
+                                            "AWS:SourceArn": f"arn:aws:cloudfront::{self.account}:distribution/{distribution.distribution_id}"
+                                        }
+                                    },
+                                }
+                            ],
+                        }
+                    ),
+                },
+                physical_resource_id=custom_resources.PhysicalResourceId.of(
+                    f"{bucket_name}-policy"
+                ),
+            ),
+            install_latest_aws_sdk=False,
+            policy=custom_resources.AwsCustomResourcePolicy.from_sdk_calls(
+                resources=[f"arn:aws:s3:::{bucket_name}"]
+            ),
         )
+        bucket_policy.node.add_dependency(distribution)
 
         # Route53 A records (aliases)
         route53.ARecord(
@@ -175,7 +199,7 @@ class BallSortSolverPipeline(cdk.Stack):
         env: cdk.Environment,
         **kwargs,
     ) -> None:
-        super().__init__(scope, construct_id,  env=env, **kwargs)
+        super().__init__(scope, construct_id, env=env, **kwargs)
 
         bucket_name = "ballsortsolver.click"
 
@@ -237,7 +261,7 @@ class BallSortSolverPipeline(cdk.Stack):
         cert_stack = CertificateStack(
             deploy_stage,
             "BallSortSolverCertificate",
-            env=cdk.Environment(account=self.account, region="us-east-1")
+            env=cdk.Environment(account=self.account, region="us-east-1"),
         )
 
         main_stack.add_dependency(cert_stack)
