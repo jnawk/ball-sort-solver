@@ -184,7 +184,12 @@ class BallSortSolverPipeline(cdk.Stack):
         # Grant S3 permissions to synth step
         pipeline.synth_project.add_to_role_policy(
             iam.PolicyStatement(
-                actions=["s3:PutObject", "s3:PutObjectAcl", "s3:ListObjectsV2"],
+                actions=[
+                    "s3:PutObject",
+                    "s3:PutObjectAcl",
+                    "s3:ListObjectsV2",
+                    "s3:ListBucket",
+                ],
                 resources=[f"{bucket.bucket_arn}/*", bucket.bucket_arn],
             )
         )
