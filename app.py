@@ -8,6 +8,7 @@ from aws_cdk import (
     aws_route53_targets as targets,
     aws_certificatemanager as acm,
     aws_iam as iam,
+    aws_ssm as ssm,
     pipelines,
 )
 import constructs
@@ -128,7 +129,14 @@ class BallSortSolverPipeline(cdk.Stack):
             ),
         )
 
-        source = pipelines.CodePipelineSource.git_hub("jnawk/ball-sort-solver", "main")
+        # Get CodeStar connection ARN from SSM
+        connection_arn = ssm.StringParameter.from_string_parameter_name(
+            self, "ConnectionArn", "/github_jnawk/arn/github_jnawk/arn"
+        ).string_value
+
+        source = pipelines.CodePipelineSource.connection(
+            "jnawk/ball-sort-solver", "main", connection_arn=connection_arn
+        )
 
         synth_step = pipelines.ShellStep(
             "Synth",
@@ -152,8 +160,6 @@ class BallSortSolverPipeline(cdk.Stack):
             self_mutation=True,
         )
 
-
-
         deploy_stage = cdk.Stage(self, "Deploy")
         BallSortDeployment(
             deploy_stage,
@@ -170,10 +176,9 @@ class BallSortSolverPipeline(cdk.Stack):
         pipeline.synth_project.add_to_role_policy(
             iam.PolicyStatement(
                 actions=["s3:PutObject", "s3:PutObjectAcl"],
-                resources=[f"{bucket.bucket_arn}/*"]
+                resources=[f"{bucket.bucket_arn}/*"],
             )
         )
-
 
 
 app = cdk.App()
